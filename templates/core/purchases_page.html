@@ -1,0 +1,786 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}المشتريات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+    /* Tom Select overrides */
+    .ts-control {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+    .ts-wrapper.single .ts-control, .ts-wrapper.single .ts-control input {
+        cursor: text;
+    }
+    /* Dashboard Cards */
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .stat-icon.sales { background: #dbeafe; color: #1d4ed8; }
+    .stat-icon.invoices { background: #fef3c7; color: #b45309; }
+    .stat-icon.items { background: #f3e8ff; color: #7e22ce; }
+    
+    .stat-details h3 { font-size: 0.875rem; color: #64748b; margin-bottom: 0.25rem; font-weight: 500; }
+    .stat-details p { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+
+    /* POS Layout */
+    .pos-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    @media (min-width: 1024px) {
+        .pos-layout {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+    
+    .pos-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .pos-header {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Product Selection Form */
+    .product-select-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .product-select-bar .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    .product-select-bar select, .product-select-bar input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-family: inherit;
+    }
+    .btn-add-item {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-add-item:hover { background: #059669; }
+    
+    /* Cart Table */
+    .cart-table-wrapper {
+        overflow-x: auto;
+    }
+    .cart-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .cart-table th, .cart-table td {
+        padding: 1rem;
+        text-align: right;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .cart-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    .cart-table tbody tr:hover { background: #f8fafc; }
+    .qty-input, .price-input {
+        width: 80px;
+        padding: 0.25rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        text-align: center;
+    }
+    .btn-remove {
+        color: #ef4444;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.25rem;
+    }
+    .btn-remove:hover { color: #b91c1c; }
+    
+    /* Summary Section */
+    .summary-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.125rem;
+    }
+    .summary-total {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        border-top: 2px dashed #cbd5e1;
+        padding-top: 1rem;
+        margin-top: 0.5rem;
+    }
+    .btn-submit-purchase {
+        background: #1d4ed8;
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.125rem;
+        cursor: pointer;
+        transition: 0.2s ease;
+        margin-top: 1rem;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-submit-purchase:hover { background: #1e3a8a; }
+    .btn-submit-purchase:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* Recent Table */
+    .recent-sales {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .table-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .btn-view {
+        background: #e0f2fe;
+        color: #0284c7;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .btn-view:hover { background: #bae6fd; }
+
+    .empty-cart-msg {
+        text-align: center;
+        padding: 2rem;
+        color: #94a3b8;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; gap: 1rem; justify-content: flex-end; }
+    
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #475569; }
+    .form-control { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-truck"></i>
+        المشتريات وإضافة المخزون
+    </h1>
+    <button type="button" class="btn btn-primary" onclick="openAddProductModal()">
+        <i class="ph ph-plus"></i>
+        إضافة منتج جديد غير موجود
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Cards -->
+<div class="dashboard-cards">
+    <div class="stat-card">
+        <div class="stat-icon sales"><i class="ph ph-money"></i></div>
+        <div class="stat-details">
+            <h3>إجمالي المشتريات</h3>
+            <p>{{ total_purchases }} ج.م</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon items"><i class="ph ph-package"></i></div>
+        <div class="stat-details">
+            <h3>القطع المشتراة</h3>
+            <p>{{ items_bought }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon invoices"><i class="ph ph-receipt"></i></div>
+        <div class="stat-details">
+            <h3>عدد الفواتير</h3>
+            <p>{{ invoices_count }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- POS Layout -->
+<div class="pos-layout">
+    
+    <!-- Left/Main side: Cart and Product Selection -->
+    <div class="pos-section">
+        <div class="pos-header">
+            <i class="ph ph-list-plus"></i>
+            إضافة منتجات للفاتورة
+        </div>
+        
+        <div class="product-select-bar">
+            <div class="form-group" style="flex: 2;">
+                <label class="form-label">ابحث عن منتج (الاسم أو الباركود)</label>
+                <select id="product-select" placeholder="ابحث...">
+                    <option value="">اختر المنتج...</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" data-barcode="{{ p.barcode|default:'' }}">
+                        {{ p.name }} 
+                        {% if p.barcode %}({{ p.barcode }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">الكمية</label>
+                <input type="number" id="qty-input" value="1" min="1">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">سعر الشراء للقطعة</label>
+                <input type="number" id="price-input" value="0.00" min="0" step="0.01">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn-add-item" onclick="addItemToCart()">
+                    <i class="ph ph-plus"></i>
+                    إضافة للقائمة
+                </button>
+            </div>
+        </div>
+
+        <div class="cart-table-wrapper">
+            <table class="cart-table" id="cart-table">
+                <thead>
+                    <tr>
+                        <th>المنتج</th>
+                        <th style="width: 100px;">الكمية</th>
+                        <th style="width: 120px;">سعر الشراء</th>
+                        <th style="width: 120px;">الإجمالي</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="cart-body">
+                    <tr><td colspan="5" class="empty-cart-msg">لم يتم إضافة أي منتجات للفاتورة.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right side: Invoice Details and Summary -->
+    <div class="pos-section">
+        <div class="pos-header">
+            <i class="ph ph-receipt"></i>
+            بيانات الفاتورة والحفظ
+        </div>
+        
+        <div class="summary-section">
+            <div class="form-group">
+                <label class="form-label">المورد (اختياري)</label>
+                <select id="supplier-select" class="form-control">
+                    <option value="">اختر المورد...</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">رقم الفاتورة (اختياري)</label>
+                <input type="text" id="invoice-number" class="form-control" placeholder="أدخل رقم الفاتورة الواردة">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">ملاحظات (اختياري)</label>
+                <input type="text" id="invoice-note" class="form-control" placeholder="ملاحظات...">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
+
+            <div class="summary-row">
+                <span>إجمالي القطع:</span>
+                <strong id="summary-items">0</strong>
+            </div>
+            <div class="summary-row summary-total">
+                <span>الإجمالي العام:</span>
+                <span><span id="summary-total">0.00</span> ج.م</span>
+            </div>
+            
+            <button class="btn-submit-purchase" id="btn-submit" onclick="submitPurchase()" disabled>
+                <i class="ph ph-check-circle"></i>
+                حفظ فاتورة المشتريات
+            </button>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Recent Purchases -->
+<div class="recent-sales mt-4">
+    <div class="pos-header">
+        <i class="ph ph-clock-counter-clockwise"></i>
+        أحدث فواتير المشتريات
+    </div>
+    <div class="cart-table-wrapper">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة المرجعي</th>
+                    <th>المورد</th>
+                    <th>التاريخ</th>
+                    <th>إجمالي الفاتورة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices|slice:":10" %}
+                <tr>
+                    <td>#{{ inv.id }} {% if inv.invoice_number %}({{ inv.invoice_number }}){% endif %}</td>
+                    <td>{{ inv.supplier.name|default:"-" }}</td>
+                    <td>{{ inv.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="fw-bold">{{ inv.total_amount }} ج.م</td>
+                    <td>
+                        <div class="table-actions">
+                            <a href="{% url 'purchase_invoice_detail' inv.id %}" class="btn-view" target="_blank">
+                                <i class="ph ph-eye"></i> عرض التفاصيل
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد فواتير مشتريات سابقة.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===== Add Product Modal ===== -->
+<div class="modal-overlay" id="add-product-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-plus-circle"></i>
+                إضافة منتج جديد
+            </h3>
+            <button class="modal-close" onclick="closeAddProductModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form id="add-product-form" onsubmit="saveTemporaryProduct(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="add-name">اسم المنتج</label>
+                    <input type="text" class="form-control" id="add-name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add-barcode">الباركود</label>
+                    <input type="text" class="form-control" id="add-barcode" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add-category">القسم</label>
+                    <select class="form-control" id="add-category" required>
+                        <option value="">اختر القسم</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row" style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="add-sell-price">سعر البيع (للجمهور)</label>
+                        <input type="number" class="form-control" id="add-sell-price" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="add-low-stock">حد التنبيه (اختياري)</label>
+                        <input type="number" class="form-control" id="add-low-stock" min="0" value="5">
+                    </div>
+                </div>
+                
+                <hr style="border:0; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
+                <div class="form-row" style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="add-buy-price">سعر الشراء الأولي</label>
+                        <input type="number" class="form-control" id="add-buy-price" step="0.01" min="0" value="0">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="add-quantity">الكمية المطلوبة للفاتورة</label>
+                        <input type="number" class="form-control" id="add-quantity" min="1" value="1">
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                    <i class="ph ph-info"></i>
+                    سيتم حفظ المنتج وإضافته للفاتورة الحالية فقط كـ "منتج مؤقت". لن يتم تسجيله فعلياً في النظام إلا بعد <strong>حفظ فاتورة المشتريات</strong> بالكامل.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">إضافة للفاتورة</button>
+                <button type="button" class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="closeAddProductModal()">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+    // Product data map
+    const productsData = {
+        {% for p in products %}
+        "{{ p.id }}": {
+            id: "{{ p.id }}",
+            name: "{{ p.name|escapejs }}",
+            barcode: "{{ p.barcode|default:''|escapejs }}",
+            avg_buy_price: "{{ p.avg_buy_price|default:'0' }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    let cart = [];
+    let tomSelectInstance;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize TomSelect for products
+        tomSelectInstance = new TomSelect("#product-select", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            },
+            searchField: ['text', 'barcode'],
+            onChange: function(value) {
+                // Focus qty input if a product is selected
+                if(value) {
+                    document.getElementById('qty-input').focus();
+                    document.getElementById('qty-input').select();
+                }
+            }
+        });
+        
+        // Ensure barcode scanner can select item and add directly if we implement it, 
+        // For now onChange takes care of focusing quantity.
+        
+        // Listen for "Enter" key on barcode/select field to add item if valid
+        document.querySelector('.ts-control input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = tomSelectInstance.getValue();
+                if (val) {
+                    // Automatically add 1 unit to cart and keep focus on the search field for the next scan
+                    document.getElementById('qty-input').value = 1;
+                    // Try to guess default price from existing product or leave at 0
+                    const p = productsData[val];
+                    document.getElementById('price-input').value = p && p.avg_buy_price ? p.avg_buy_price : 0;
+                    addItemToCart();
+                }
+            }
+        });
+        
+        // Listen for "Enter" on price input to add to cart
+        document.getElementById('price-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addItemToCart();
+            }
+        });
+    });
+
+    function addItemToCart() {
+        const select = document.getElementById('product-select');
+        const productId = select.value;
+        const qtyInput = document.getElementById('qty-input');
+        const priceInput = document.getElementById('price-input');
+        
+        const qty = parseInt(qtyInput.value);
+        const price = parseFloat(priceInput.value);
+        
+        if (!productId) {
+            alert('يرجى اختيار منتج');
+            return;
+        }
+        if (!qty || qty <= 0) {
+            alert('يرجى إدخال كمية صحيحة');
+            return;
+        }
+        if (isNaN(price) || price <= 0) {
+            alert('يرجى إدخال سعر شراء صحيح');
+            return;
+        }
+        
+        const product = productsData[productId];
+        
+        // Check if already in cart
+        const existingIdx = cart.findIndex(i => i.product_id === productId);
+        if (existingIdx > -1) {
+            cart[existingIdx].quantity += qty;
+            cart[existingIdx].buy_price = price; // Update to latest price typed
+        } else {
+            cart.push({
+                product_id: productId,
+                name: product.name,
+                quantity: qty,
+                buy_price: price
+            });
+        }
+        
+        // Reset inputs
+        tomSelectInstance.clear();
+        qtyInput.value = '1';
+        priceInput.value = '0.00';
+        tomSelectInstance.focus();
+        
+        renderCart();
+    }
+    
+    function removeItem(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+    
+    function updateQty(index, newQty) {
+        newQty = parseInt(newQty);
+        if (newQty > 0) {
+            cart[index].quantity = newQty;
+            renderCart();
+        }
+    }
+    
+    function updatePrice(index, newPrice) {
+        newPrice = parseFloat(newPrice);
+        if (newPrice > 0) {
+            cart[index].buy_price = newPrice;
+            renderCart();
+        }
+    }
+    
+    function renderCart() {
+        const tbody = document.getElementById('cart-body');
+        const btnSubmit = document.getElementById('btn-submit');
+        
+        if (cart.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-cart-msg">لم يتم إضافة أي منتجات للفاتورة.</td></tr>';
+            document.getElementById('summary-items').textContent = '0';
+            document.getElementById('summary-total').textContent = '0.00';
+            btnSubmit.disabled = true;
+            return;
+        }
+        
+        let html = '';
+        let totalItems = 0;
+        let totalAmount = 0;
+        
+        cart.forEach((item, index) => {
+            const itemTotal = item.quantity * item.buy_price;
+            totalItems += item.quantity;
+            totalAmount += itemTotal;
+            
+            html += `
+                <tr>
+                    <td><strong>${item.name}</strong></td>
+                    <td>
+                        <input type="number" class="qty-input" value="${item.quantity}" min="1" 
+                               onchange="updateQty(${index}, this.value)">
+                    </td>
+                    <td>
+                        <input type="number" class="price-input" value="${item.buy_price}" min="0.01" step="0.01"
+                               onchange="updatePrice(${index}, this.value)">
+                    </td>
+                    <td class="fw-bold">${itemTotal.toFixed(2)} ج.م</td>
+                    <td>
+                        <button class="btn-remove" onclick="removeItem(${index})" title="حذف">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        document.getElementById('summary-items').textContent = totalItems;
+        document.getElementById('summary-total').textContent = totalAmount.toFixed(2);
+        btnSubmit.disabled = false;
+    }
+    
+    function submitPurchase() {
+        if (cart.length === 0) return;
+        
+        const supplierId = document.getElementById('supplier-select').value;
+        const invoiceNumber = document.getElementById('invoice-number').value;
+        const invoiceNote = document.getElementById('invoice-note').value;
+        const btn = document.getElementById('btn-submit');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> جاري الحفظ...';
+        
+        const payload = {
+            cart: cart,
+            supplier_id: supplierId,
+            invoice_number: invoiceNumber,
+            invoice_note: invoiceNote
+        };
+        
+        fetch("{% url 'purchase_create' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حفظ الفاتورة بنجاح!');
+                window.location.reload();
+            } else {
+                alert('خطأ: ' + (data.error || 'حدث خطأ غير معروف'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-check-circle"></i> حفظ فاتورة المشتريات';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('حدث خطأ في الاتصال');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph ph-check-circle"></i> حفظ فاتورة المشتريات';
+        });
+    }
+
+    // Modal functions for Add Product
+    function openAddProductModal() {
+        document.getElementById('add-product-form').reset();
+        document.getElementById('add-product-modal').classList.add('open');
+    }
+    function closeAddProductModal() {
+        document.getElementById('add-product-modal').classList.remove('open');
+    }
+
+    let tempIdCounter = 1;
+
+    function saveTemporaryProduct(event) {
+        event.preventDefault();
+        
+        const name = document.getElementById('add-name').value;
+        const barcode = document.getElementById('add-barcode').value;
+        const category_id = document.getElementById('add-category').value;
+        const sell_price = parseFloat(document.getElementById('add-sell-price').value);
+        const low_stock_alert = parseInt(document.getElementById('add-low-stock').value) || 0;
+        
+        const buy_price = parseFloat(document.getElementById('add-buy-price').value) || 0;
+        const quantity = parseInt(document.getElementById('add-quantity').value) || 1;
+
+        if (buy_price <= 0 || quantity <= 0) {
+            alert('يجب أن يكون سعر الشراء والكمية أكبر من صفر');
+            return;
+        }
+
+        const tempId = 'temp-' + tempIdCounter++;
+        
+        // Add to cart directly
+        cart.push({
+            product_id: tempId,
+            name: name + ' (جديد)',
+            quantity: quantity,
+            buy_price: buy_price,
+            is_new: true,
+            new_data: {
+                name: name,
+                barcode: barcode,
+                category_id: category_id,
+                sell_price: sell_price,
+                low_stock_alert: low_stock_alert
+            }
+        });
+        
+        renderCart();
+        closeAddProductModal();
+    }
+</script>
+{% endblock %}

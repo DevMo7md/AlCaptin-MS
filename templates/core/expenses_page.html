@@ -1,0 +1,732 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}المصروفات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Expenses Page Styles
+       ========================================== */
+
+    /* --- Stats Cards Row --- */
+    .expense-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .expense-stat-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .expense-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+    }
+
+    .expense-stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .expense-stat-card.total::before { background: var(--color-orange-500); }
+    .expense-stat-card.cat-card::before { background: #3b82f6; }
+
+    .stat-card-top {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card-icon.total-icon {
+        background: rgba(232,119,46,.1);
+        color: var(--color-orange-500);
+    }
+
+    .stat-card-icon.cat-icon {
+        background: rgba(59,130,246,.1);
+        color: #3b82f6;
+    }
+
+    .stat-card-info h3 {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--color-gray-500);
+        margin-bottom: 0.15rem;
+    }
+
+    .stat-card-info p {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        line-height: 1.2;
+    }
+
+    .stat-card-comparison {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    .comparison-up {
+        background: rgba(239,68,68,.1);
+        color: #dc2626;
+    }
+
+    .comparison-down {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+
+    .comparison-same {
+        background: rgba(100,116,139,.1);
+        color: #64748b;
+    }
+
+    .comparison-no-data {
+        background: rgba(100,116,139,.06);
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    /* --- Action Bar --- */
+    .expense-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .expense-actions-btns {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-categories {
+        background: var(--color-gray-50);
+        color: var(--color-navy-800);
+        border: 2px solid var(--color-gray-200);
+        padding: 0.65rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-categories:hover {
+        border-color: var(--color-gray-300);
+        background: var(--color-gray-100);
+        color: var(--color-navy-800);
+    }
+
+    /* --- Expenses Table Section --- */
+    .expenses-table-section {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--color-orange-500);
+    }
+
+    /* --- Add Category Inline (inside modal) --- */
+    .inline-add-category {
+        display: none;
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: var(--color-gray-50);
+        border-radius: var(--radius-sm);
+        border: 1px dashed var(--color-gray-300);
+    }
+
+    .inline-add-category.visible {
+        display: block;
+        animation: slideDown .25s ease;
+    }
+
+    .inline-add-row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .inline-add-row input {
+        flex: 1;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--color-gray-300);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.88rem;
+        outline: none;
+    }
+
+    .inline-add-row input:focus {
+        border-color: var(--color-orange-500);
+    }
+
+    .btn-inline-save {
+        background: var(--color-orange-500);
+        color: white;
+        border: none;
+        padding: 0.5rem 0.85rem;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background var(--transition-fast);
+    }
+
+    .btn-inline-save:hover {
+        background: var(--color-orange-600);
+    }
+
+    .toggle-add-cat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--color-orange-500);
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-family: inherit;
+        margin-top: 0.5rem;
+        transition: color var(--transition-fast);
+    }
+
+    .toggle-add-cat:hover {
+        color: var(--color-orange-600);
+    }
+
+    /* --- Delete Confirmation --- */
+    .btn-delete-expense {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--color-red-500);
+        font-size: 1rem;
+        padding: 0.25rem;
+        transition: color var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        background: rgba(239,68,68,.08);
+    }
+
+    .btn-delete-expense:hover {
+        background: var(--color-red-500);
+        color: var(--color-white);
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 600px) {
+        .expense-stats {
+            grid-template-columns: 1fr;
+        }
+        .expense-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-currency-dollar"></i>
+        المصروفات
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- ==========================================
+     Stats Cards — Total + Per-Category
+     ========================================== -->
+<div class="expense-stats">
+    <!-- Total Card -->
+    <div class="expense-stat-card total">
+        <div class="stat-card-top">
+            <div class="stat-card-icon total-icon">
+                <i class="ph ph-wallet"></i>
+            </div>
+            <div class="stat-card-info">
+                <h3>إجمالي مصروفات الشهر</h3>
+                <p>{{ stats.total_this_month }} ج.م</p>
+            </div>
+        </div>
+        {% with cmp=stats.total_comparison %}
+        {% if cmp.has_previous %}
+            {% if cmp.direction == 'up' %}
+            <span class="stat-card-comparison comparison-up">
+                <i class="ph ph-arrow-up"></i> {{ cmp.percent }}% مقارنة بالشهر السابق
+            </span>
+            {% elif cmp.direction == 'down' %}
+            <span class="stat-card-comparison comparison-down">
+                <i class="ph ph-arrow-down"></i> {{ cmp.percent }}% مقارنة بالشهر السابق
+            </span>
+            {% else %}
+            <span class="stat-card-comparison comparison-same">
+                <i class="ph ph-equals"></i> بدون تغيير عن الشهر السابق
+            </span>
+            {% endif %}
+        {% else %}
+            {% if stats.total_this_month > 0 %}
+            <span class="stat-card-comparison comparison-no-data">
+                لا توجد بيانات للشهر السابق
+            </span>
+            {% endif %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Per-Category Cards (top 4) -->
+    {% for cat_stat in stats.category_stats|slice:":4" %}
+    {% if cat_stat.total > 0 %}
+    <div class="expense-stat-card cat-card">
+        <div class="stat-card-top">
+            <div class="stat-card-icon cat-icon">
+                <i class="ph ph-tag"></i>
+            </div>
+            <div class="stat-card-info">
+                <h3>{{ cat_stat.name }}</h3>
+                <p>{{ cat_stat.total }} ج.م</p>
+            </div>
+        </div>
+        {% with cmp=cat_stat.comparison %}
+        {% if cmp.has_previous %}
+            {% if cmp.direction == 'up' %}
+            <span class="stat-card-comparison comparison-up">
+                <i class="ph ph-arrow-up"></i> {{ cmp.percent }}% مقارنة بالشهر السابق
+            </span>
+            {% elif cmp.direction == 'down' %}
+            <span class="stat-card-comparison comparison-down">
+                <i class="ph ph-arrow-down"></i> {{ cmp.percent }}% مقارنة بالشهر السابق
+            </span>
+            {% else %}
+            <span class="stat-card-comparison comparison-same">
+                <i class="ph ph-equals"></i> بدون تغيير
+            </span>
+            {% endif %}
+        {% else %}
+            <span class="stat-card-comparison comparison-no-data">
+                لا توجد بيانات للشهر السابق
+            </span>
+        {% endif %}
+        {% endwith %}
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- ==========================================
+     Action Buttons
+     ========================================== -->
+<div class="expense-actions">
+    <div class="expense-actions-btns">
+        <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()" id="btn-open-add-expense">
+            <i class="ph ph-plus"></i> إضافة مصروف
+        </button>
+        <a href="{% url 'expense_categories_page' %}" class="btn-categories" id="btn-go-categories">
+            <i class="ph ph-folders"></i> إدارة التصنيفات
+        </a>
+    </div>
+</div>
+
+<!-- ==========================================
+     Add Expense Modal (Popup)
+     ========================================== -->
+<div class="modal-overlay" id="add-expense-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-plus-circle" style="color: var(--color-orange-500);"></i>
+                إضافة مصروف جديد
+            </h3>
+            <button class="modal-close" onclick="closeAddExpenseModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'expense_add' %}" id="add-expense-form">
+            {% csrf_token %}
+            <div class="modal-body">
+                <!-- Category -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">التصنيف</label>
+                    <select name="category" class="form-control" id="expense-category-select" style="padding-right: 1rem;">
+                        <option value="">-- بدون تصنيف --</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Quick Add Category -->
+                    <button type="button" class="toggle-add-cat" onclick="toggleInlineAddCategory()">
+                        <i class="ph ph-plus-circle"></i> إضافة تصنيف جديد
+                    </button>
+                    <div class="inline-add-category" id="inline-add-cat">
+                        <div class="inline-add-row">
+                            <input type="text" id="new-cat-name" placeholder="اسم التصنيف الجديد...">
+                            <button type="button" class="btn-inline-save" onclick="addCategoryAjax()">
+                                <i class="ph ph-check"></i> حفظ
+                            </button>
+                        </div>
+                        <small id="add-cat-feedback" style="display:block; margin-top: 0.4rem; font-size: 0.78rem;"></small>
+                    </div>
+                </div>
+
+                <!-- Amount -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">المبلغ (ج.م)</label>
+                    <input type="number" name="amount" class="form-control" step="0.01" min="0.01" required
+                           placeholder="أدخل المبلغ..." style="padding-right: 1rem;">
+                </div>
+
+                <!-- Date -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">التاريخ</label>
+                    <input type="date" name="expense_date" class="form-control" required
+                           style="padding-right: 1rem;">
+                </div>
+
+                <!-- Note -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">ملاحظات (اختياري)</label>
+                    <textarea name="note" class="form-control" rows="2"
+                              placeholder="أي ملاحظات إضافية..."
+                              style="padding-right: 1rem; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph ph-check-circle"></i> حفظ المصروف
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddExpenseModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================
+     Delete Confirmation Modal
+     ========================================== -->
+<div class="modal-overlay" id="delete-expense-modal">
+    <div class="modal" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-warning" style="color: var(--color-red-500);"></i>
+                تأكيد الحذف
+            </h3>
+            <button class="modal-close" onclick="closeDeleteModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'expense_delete' %}" id="delete-expense-form">
+            {% csrf_token %}
+            <input type="hidden" name="expense_id" id="delete-expense-id">
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 1rem; margin-bottom: 0.5rem;">هل أنت متأكد من حذف هذا المصروف؟</p>
+                <p style="font-size: 0.85rem; color: var(--color-gray-500);">لا يمكن التراجع عن هذا الإجراء.</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="ph ph-trash"></i> حذف
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeDeleteModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================
+     Expenses List Table
+     ========================================== -->
+<div class="expenses-table-section">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="ph ph-list-dashes"></i>
+            قائمة المصروفات
+        </h2>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>التصنيف</th>
+                    <th>المبلغ</th>
+                    <th>الملاحظات</th>
+                    <th>التاريخ</th>
+                    <th>بواسطة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td>{{ expense.id }}</td>
+                    <td>
+                        {% if expense.category %}
+                            <span class="badge badge-info">{{ expense.category.name }}</span>
+                        {% else %}
+                            <span class="badge" style="background: rgba(100,116,139,.1); color: #64748b;">بدون تصنيف</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight: 700;">{{ expense.amount }} ج.م</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ expense.note|default:"-" }}
+                    </td>
+                    <td>{{ expense.expense_date|date:"Y-m-d" }}</td>
+                    <td>{{ expense.created_by.get_full_name|default:expense.created_by.username|default:"-" }}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-delete-expense" onclick="confirmDelete({{ expense.id }})" title="حذف">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="ph ph-receipt"></i>
+                            <h3>لا توجد مصروفات</h3>
+                            <p>ابدأ بإضافة مصروفاتك لتتبع نفقاتك.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if expenses.has_other_pages %}
+    <div class="pagination">
+        {% if expenses.has_previous %}
+            <a href="?page={{ expenses.previous_page_number }}"><i class="ph ph-caret-right"></i></a>
+        {% else %}
+            <span class="disabled"><i class="ph ph-caret-right"></i></span>
+        {% endif %}
+
+        {% for num in expenses.paginator.page_range %}
+            {% if expenses.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > expenses.number|add:'-3' and num < expenses.number|add:'3' %}
+                <a href="?page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if expenses.has_next %}
+            <a href="?page={{ expenses.next_page_number }}"><i class="ph ph-caret-left"></i></a>
+        {% else %}
+            <span class="disabled"><i class="ph ph-caret-left"></i></span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // ==========================================
+    // Set default date to today
+    // ==========================================
+    const dateInput = document.querySelector('input[name="expense_date"]');
+    if (dateInput && !dateInput.value) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // ==========================================
+    // Add Expense Modal
+    // ==========================================
+    window.openAddExpenseModal = function() {
+        document.getElementById('add-expense-modal').classList.add('open');
+    };
+
+    window.closeAddExpenseModal = function() {
+        document.getElementById('add-expense-modal').classList.remove('open');
+    };
+
+    // Close modal on overlay click
+    document.getElementById('add-expense-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeAddExpenseModal();
+    });
+
+    // ==========================================
+    // Delete Modal
+    // ==========================================
+    window.confirmDelete = function(expenseId) {
+        document.getElementById('delete-expense-id').value = expenseId;
+        document.getElementById('delete-expense-modal').classList.add('open');
+    };
+
+    window.closeDeleteModal = function() {
+        document.getElementById('delete-expense-modal').classList.remove('open');
+    };
+
+    document.getElementById('delete-expense-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteModal();
+    });
+
+    // ==========================================
+    // Inline Add Category (AJAX from popup)
+    // ==========================================
+    window.toggleInlineAddCategory = function() {
+        const el = document.getElementById('inline-add-cat');
+        el.classList.toggle('visible');
+        if (el.classList.contains('visible')) {
+            document.getElementById('new-cat-name').focus();
+        }
+    };
+
+    window.addCategoryAjax = async function() {
+        const nameInput = document.getElementById('new-cat-name');
+        const feedback = document.getElementById('add-cat-feedback');
+        const name = nameInput.value.trim();
+
+        if (!name) {
+            feedback.textContent = 'يرجى إدخال اسم التصنيف';
+            feedback.style.color = '#dc2626';
+            return;
+        }
+
+        feedback.textContent = 'جاري الإضافة...';
+        feedback.style.color = '#64748b';
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        try {
+            const response = await fetch("{% url 'expense_category_add' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ name: name })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Add to select dropdown
+                const select = document.getElementById('expense-category-select');
+                const option = document.createElement('option');
+                option.value = data.id;
+                option.textContent = data.name;
+                option.selected = true;
+                select.appendChild(option);
+
+                // Reset
+                nameInput.value = '';
+                feedback.textContent = '✓ ' + data.message;
+                feedback.style.color = '#16a34a';
+
+                setTimeout(function() {
+                    document.getElementById('inline-add-cat').classList.remove('visible');
+                    feedback.textContent = '';
+                }, 1500);
+            } else {
+                feedback.textContent = data.message;
+                feedback.style.color = '#dc2626';
+            }
+        } catch (err) {
+            console.error(err);
+            feedback.textContent = 'حدث خطأ في الاتصال';
+            feedback.style.color = '#dc2626';
+        }
+    };
+
+    // Enter key for inline category input
+    document.getElementById('new-cat-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCategoryAjax();
+        }
+    });
+
+})();
+</script>
+{% endblock %}

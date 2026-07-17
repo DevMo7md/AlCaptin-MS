@@ -1,0 +1,430 @@
+/* ============================================
+   Al Captin MS — Products Page Styles
+   ============================================ */
+
+/* ---------- Products Card ---------- */
+.products-card {
+    animation: fadeInUp .5s ease;
+}
+
+.products-count-badge {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--color-orange-500);
+    background: rgba(232,119,46,.08);
+    padding: .3rem .85rem;
+    border-radius: 50px;
+}
+
+/* ---------- Product Name Cell ---------- */
+.product-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.product-name {
+    font-weight: 600;
+    color: var(--color-navy-800);
+}
+
+.product-id {
+    font-family: 'Cairo', monospace;
+    font-weight: 600;
+    color: var(--color-orange-500);
+    font-size: .82rem;
+}
+
+.fw-bold {
+    font-weight: 700;
+}
+
+/* ---------- Profit Cell ---------- */
+.profit-value {
+    font-weight: 700;
+    color: var(--color-green-500);
+}
+
+.profit-value.negative {
+    color: var(--color-red-500);
+}
+
+.profit-cell {
+    font-size: .88rem;
+}
+
+/* ---------- Stock Display ---------- */
+.stock-display {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    min-width: 100px;
+}
+
+.stock-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--color-gray-100);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 50px;
+}
+
+.stock-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .6s cubic-bezier(.4,0,.2,1), background .3s ease;
+    min-width: 2px;
+}
+
+.stock-num {
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--color-navy-800);
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ---------- Form Enhancements ---------- */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-left: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left .75rem center;
+}
+
+/* ---------- Modal Section Titles ---------- */
+.modal-section-title {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--color-orange-500);
+    margin-bottom: .85rem;
+    padding-bottom: .5rem;
+    border-bottom: 1.5px solid rgba(232,119,46,.12);
+    letter-spacing: .02em;
+}
+
+.modal-section-title i {
+    font-size: 1rem;
+}
+
+/* Larger view modal */
+.modal.modal-lg {
+    max-width: 640px;
+}
+
+/* ---------- Profit Preview ---------- */
+.profit-preview {
+    background: var(--color-gray-50);
+    border: 1.5px dashed var(--color-gray-200);
+    border-radius: var(--radius-sm);
+    padding: .85rem 1.25rem;
+    margin-top: .5rem;
+    transition: all var(--transition-fast);
+}
+
+.profit-preview.positive {
+    background: rgba(34,197,94,.06);
+    border-color: rgba(34,197,94,.25);
+}
+
+.profit-preview.positive strong {
+    color: var(--color-green-500);
+}
+
+.profit-preview.negative {
+    background: rgba(239,68,68,.06);
+    border-color: rgba(239,68,68,.25);
+}
+
+.profit-preview.negative strong {
+    color: var(--color-red-500);
+}
+
+.profit-preview-inner {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .9rem;
+    font-weight: 500;
+    color: var(--color-gray-500);
+}
+
+.profit-preview-inner i {
+    font-size: 1.15rem;
+    color: var(--color-orange-500);
+}
+
+.profit-preview-inner strong {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--color-navy-800);
+    transition: color var(--transition-fast);
+}
+
+/* ---------- Batch Info Note (Edit Modal) ---------- */
+.batch-info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .85rem 1rem;
+    background: rgba(59,130,246,.05);
+    border: 1px solid rgba(59,130,246,.15);
+    border-radius: var(--radius-sm);
+    font-size: .82rem;
+    color: #3b82f6;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.batch-info-note i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.batch-info-note strong {
+    font-weight: 700;
+}
+
+/* ---------- Batch Product Summary ---------- */
+.batch-product-summary {
+    background: var(--color-gray-50);
+    border: 1px solid var(--color-gray-100);
+    border-radius: var(--radius-sm);
+    padding: .85rem 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .35rem 0;
+    font-size: .88rem;
+}
+
+.summary-row + .summary-row {
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.summary-label {
+    color: var(--color-gray-500);
+    font-weight: 500;
+}
+
+.summary-value {
+    color: var(--color-navy-800);
+    font-weight: 600;
+}
+
+/* ---------- Batch History ---------- */
+.batch-history {
+    margin-top: 1.25rem;
+}
+
+.batch-history-title {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--color-gray-500);
+    margin-bottom: .65rem;
+}
+
+.batch-history-title i {
+    font-size: 1rem;
+    color: var(--color-orange-500);
+}
+
+.batch-history-table-wrap {
+    border: 1px solid var(--color-gray-100);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.batch-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8rem;
+}
+
+.batch-history-table thead {
+    background: var(--color-gray-50);
+}
+
+.batch-history-table thead th {
+    padding: .55rem .85rem;
+    font-weight: 600;
+    color: var(--color-gray-500);
+    text-align: right;
+    font-size: .75rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+.batch-history-table tbody tr {
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.batch-history-table tbody td {
+    padding: .55rem .85rem;
+    color: var(--color-navy-800);
+}
+
+/* ---------- View Batches Section ---------- */
+.view-batches-section {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.view-batches-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--color-navy-800);
+    margin-bottom: .85rem;
+}
+
+.view-batches-title i {
+    color: var(--color-orange-500);
+}
+
+/* ---------- Restock Action Button ---------- */
+.action-btn.restock {
+    background: rgba(34,197,94,.08);
+    color: var(--color-green-500);
+}
+.action-btn.restock:hover {
+    background: var(--color-green-500);
+    color: var(--color-white);
+}
+
+/* ---------- Delete Confirmation ---------- */
+.delete-confirm-content {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.delete-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(239,68,68,.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.75rem;
+    color: var(--color-red-500);
+    animation: pulse-glow-red 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow-red {
+    0%, 100% { box-shadow: 0 0 20px rgba(239,68,68,.15); }
+    50%      { box-shadow: 0 0 40px rgba(239,68,68,.3); }
+}
+
+.delete-confirm-content p {
+    font-size: .95rem;
+    color: var(--color-gray-500);
+}
+
+.delete-product-name {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--color-navy-800);
+    margin: .5rem 0;
+}
+
+/* ---------- View Details ---------- */
+.view-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.view-item {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: .85rem;
+    background: var(--color-gray-50);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-gray-100);
+}
+
+.view-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.view-label {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--color-gray-500);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.view-value {
+    font-size: .95rem;
+    font-weight: 600;
+    color: var(--color-navy-800);
+}
+
+/* ---------- Table Row Animations ---------- */
+.product-row {
+    animation: fadeInUp .4s ease;
+    animation-fill-mode: backwards;
+}
+
+.product-row:nth-child(1) { animation-delay: .05s; }
+.product-row:nth-child(2) { animation-delay: .1s; }
+.product-row:nth-child(3) { animation-delay: .15s; }
+.product-row:nth-child(4) { animation-delay: .2s; }
+.product-row:nth-child(5) { animation-delay: .25s; }
+.product-row:nth-child(6) { animation-delay: .3s; }
+.product-row:nth-child(7) { animation-delay: .35s; }
+.product-row:nth-child(8) { animation-delay: .4s; }
+.product-row:nth-child(9) { animation-delay: .45s; }
+.product-row:nth-child(10) { animation-delay: .5s; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .view-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .data-table {
+        font-size: .82rem;
+    }
+
+    .data-table thead th,
+    .data-table tbody td {
+        padding: .7rem .85rem;
+    }
+
+    .modal.modal-lg {
+        max-width: 100%;
+    }
+}

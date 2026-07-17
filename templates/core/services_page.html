@@ -1,0 +1,839 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}الخدمات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Services Page Styles
+       ========================================== */
+
+    /* --- Stats Cards Row --- */
+    .service-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .service-stat-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .service-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+    }
+
+    .service-stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .service-stat-card.card-orange::before { background: var(--color-orange-500); }
+    .service-stat-card.card-blue::before { background: #3b82f6; }
+    .service-stat-card.card-green::before { background: #16a34a; }
+    .service-stat-card.card-purple::before { background: #8b5cf6; }
+
+    .stat-card-top {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card-icon.icon-orange {
+        background: rgba(232,119,46,.1);
+        color: var(--color-orange-500);
+    }
+
+    .stat-card-icon.icon-blue {
+        background: rgba(59,130,246,.1);
+        color: #3b82f6;
+    }
+
+    .stat-card-icon.icon-green {
+        background: rgba(22,163,74,.1);
+        color: #16a34a;
+    }
+
+    .stat-card-icon.icon-purple {
+        background: rgba(139,92,246,.1);
+        color: #8b5cf6;
+    }
+
+    .stat-card-info h3 {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--color-gray-500);
+        margin-bottom: 0.15rem;
+    }
+
+    .stat-card-info p {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        line-height: 1.2;
+    }
+
+    /* --- Action Bar --- */
+    .service-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .service-actions-btns {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-types {
+        background: var(--color-gray-50);
+        color: var(--color-navy-800);
+        border: 2px solid var(--color-gray-200);
+        padding: 0.65rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-types:hover {
+        border-color: var(--color-gray-300);
+        background: var(--color-gray-100);
+        color: var(--color-navy-800);
+    }
+
+    /* --- Filter Bar --- */
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+        padding: 1rem 1.25rem;
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .filter-bar label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .filter-bar label i {
+        color: var(--color-orange-500);
+    }
+
+    .filter-bar select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--color-gray-300);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.85rem;
+        background: var(--color-white);
+        color: var(--color-navy-800);
+        outline: none;
+        min-width: 160px;
+        cursor: pointer;
+        transition: border-color var(--transition-fast);
+    }
+
+    .filter-bar select:focus {
+        border-color: var(--color-orange-500);
+    }
+
+    .filter-bar .btn-filter {
+        background: var(--color-orange-500);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: background var(--transition-fast);
+    }
+
+    .filter-bar .btn-filter:hover {
+        background: var(--color-orange-600);
+    }
+
+    .filter-bar .btn-clear {
+        background: none;
+        color: var(--color-gray-500);
+        border: 1px solid var(--color-gray-300);
+        padding: 0.5rem 0.85rem;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .filter-bar .btn-clear:hover {
+        border-color: var(--color-gray-400);
+        color: var(--color-navy-800);
+    }
+
+    /* --- Table Section --- */
+    .services-table-section {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--color-orange-500);
+    }
+
+    /* --- Inline Add Service Type (inside modal) --- */
+    .inline-add-type {
+        display: none;
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: var(--color-gray-50);
+        border-radius: var(--radius-sm);
+        border: 1px dashed var(--color-gray-300);
+    }
+
+    .inline-add-type.visible {
+        display: block;
+        animation: slideDown .25s ease;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .inline-add-row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .inline-add-row input,
+    .inline-add-row select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--color-gray-300);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.85rem;
+        outline: none;
+    }
+
+    .inline-add-row input:focus,
+    .inline-add-row select:focus {
+        border-color: var(--color-orange-500);
+    }
+
+    .inline-add-row input[type="text"] {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .inline-add-row input[type="number"] {
+        width: 100px;
+    }
+
+    .btn-inline-save {
+        background: var(--color-orange-500);
+        color: white;
+        border: none;
+        padding: 0.5rem 0.85rem;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background var(--transition-fast);
+    }
+
+    .btn-inline-save:hover {
+        background: var(--color-orange-600);
+    }
+
+    .toggle-add-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--color-orange-500);
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-family: inherit;
+        margin-top: 0.5rem;
+        transition: color var(--transition-fast);
+    }
+
+    .toggle-add-type:hover {
+        color: var(--color-orange-600);
+    }
+
+    /* --- Commission Preview --- */
+    .commission-preview {
+        margin-top: 0.5rem;
+        padding: 0.65rem 1rem;
+        background: rgba(22,163,74,.06);
+        border: 1px solid rgba(22,163,74,.15);
+        border-radius: var(--radius-sm);
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #16a34a;
+        display: none;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .commission-preview.visible {
+        display: flex;
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 600px) {
+        .service-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+        .service-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-bar select {
+            min-width: 100%;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .service-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-swap"></i>
+        الخدمات
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- ==========================================
+     Stats Cards
+     ========================================== -->
+<div class="service-stats">
+    <!-- Total Profit -->
+    <div class="service-stat-card card-orange">
+        <div class="stat-card-top">
+            <div class="stat-card-icon icon-orange">
+                <i class="ph ph-coins"></i>
+            </div>
+            <div class="stat-card-info">
+                <h3>إجمالي الأرباح (العمولات)</h3>
+                <p>{{ stats.total_profit }} ج.م</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Count -->
+    <div class="service-stat-card card-blue">
+        <div class="stat-card-top">
+            <div class="stat-card-icon icon-blue">
+                <i class="ph ph-hash"></i>
+            </div>
+            <div class="stat-card-info">
+                <h3>عدد المعاملات</h3>
+                <p>{{ stats.total_count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- This Month Profit -->
+    <div class="service-stat-card card-green">
+        <div class="stat-card-top">
+            <div class="stat-card-icon icon-green">
+                <i class="ph ph-calendar-check"></i>
+            </div>
+            <div class="stat-card-info">
+                <h3>أرباح هذا الشهر</h3>
+                <p>{{ stats.month_profit }} ج.م</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- This Month Count -->
+    <div class="service-stat-card card-purple">
+        <div class="stat-card-top">
+            <div class="stat-card-icon icon-purple">
+                <i class="ph ph-chart-line-up"></i>
+            </div>
+            <div class="stat-card-info">
+                <h3>معاملات هذا الشهر</h3>
+                <p>{{ stats.month_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     Action Buttons
+     ========================================== -->
+<div class="service-actions">
+    <div class="service-actions-btns">
+        <button class="btn btn-primary btn-sm" onclick="openAddTxnModal()" id="btn-open-add-txn">
+            <i class="ph ph-plus"></i> إضافة معاملة
+        </button>
+        <a href="{% url 'service_types_page' %}" class="btn-types" id="btn-go-types">
+            <i class="ph ph-folders"></i> إدارة أنواع الخدمات
+        </a>
+    </div>
+</div>
+
+<!-- ==========================================
+     Add Transaction Modal (Popup)
+     ========================================== -->
+<div class="modal-overlay" id="add-txn-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-plus-circle" style="color: var(--color-orange-500);"></i>
+                إضافة معاملة جديدة
+            </h3>
+            <button class="modal-close" onclick="closeAddTxnModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'service_transaction_add' %}" id="add-txn-form">
+            {% csrf_token %}
+            <div class="modal-body">
+                <!-- Service Type -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">نوع الخدمة</label>
+                    <select name="service_type" class="form-control" id="txn-service-type" required style="padding-right: 1rem;">
+                        <option value="">-- اختر نوع الخدمة --</option>
+                        {% for stype in service_types %}
+                        <option value="{{ stype.id }}"
+                                data-commission-type="{{ stype.commission_type }}"
+                                data-commission-value="{{ stype.commission_value }}">
+                            {{ stype.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Quick Add Service Type -->
+                    <button type="button" class="toggle-add-type" onclick="toggleInlineAddType()">
+                        <i class="ph ph-plus-circle"></i> إضافة نوع خدمة جديد
+                    </button>
+                    <div class="inline-add-type" id="inline-add-type">
+                        <div class="inline-add-row">
+                            <input type="text" id="new-type-name" placeholder="اسم الخدمة...">
+                            <select id="new-type-commission-type">
+                                <option value="percentage">نسبة %</option>
+                                <option value="fixed">مبلغ ثابت</option>
+                            </select>
+                            <input type="number" id="new-type-commission-value" placeholder="القيمة" step="0.01" min="0">
+                            <button type="button" class="btn-inline-save" onclick="addTypeAjax()">
+                                <i class="ph ph-check"></i> حفظ
+                            </button>
+                        </div>
+                        <small id="add-type-feedback" style="display:block; margin-top: 0.4rem; font-size: 0.78rem;"></small>
+                    </div>
+                </div>
+
+                <!-- Service Amount -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">المبلغ (ج.م)</label>
+                    <input type="number" name="service_amount" class="form-control" id="txn-amount"
+                           step="0.01" min="0.01" required
+                           placeholder="أدخل مبلغ الخدمة..." style="padding-right: 1rem;">
+                    <!-- Commission Preview -->
+                    <div class="commission-preview" id="commission-preview">
+                        <i class="ph ph-info"></i>
+                        <span>العمولة المتوقعة: <strong id="commission-value-display">0.00</strong> ج.م</span>
+                    </div>
+                </div>
+
+                <!-- Customer Phone -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">هاتف العميل (اختياري)</label>
+                    <input type="text" name="customer_phone" class="form-control"
+                           placeholder="رقم الهاتف..." style="padding-right: 1rem;">
+                </div>
+
+                <!-- Note -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">ملاحظات (اختياري)</label>
+                    <textarea name="note" class="form-control" rows="2"
+                              placeholder="أي ملاحظات إضافية..."
+                              style="padding-right: 1rem; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph ph-check-circle"></i> حفظ المعاملة
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddTxnModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================
+     Filters
+     ========================================== -->
+<form class="filter-bar" method="GET" action="{% url 'services_page' %}" id="filter-form">
+    <label><i class="ph ph-funnel"></i> تصفية:</label>
+
+    <select name="service_type" id="filter-service-type">
+        <option value="">-- كل الأنواع --</option>
+        {% for ft in filter_types %}
+        <option value="{{ ft.id }}" {% if selected_type == ft.id|stringformat:"d" %}selected{% endif %}>
+            {{ ft.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <select name="created_by" id="filter-created-by">
+        <option value="">-- كل المستخدمين --</option>
+        {% for u in filter_users %}
+        <option value="{{ u.id }}" {% if selected_user == u.id|stringformat:"d" %}selected{% endif %}>
+            {{ u.get_full_name|default:u.username }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn-filter">
+        <i class="ph ph-magnifying-glass"></i> بحث
+    </button>
+
+    {% if selected_type or selected_user %}
+    <a href="{% url 'services_page' %}" class="btn-clear">
+        <i class="ph ph-x"></i> مسح الفلاتر
+    </a>
+    {% endif %}
+</form>
+
+<!-- ==========================================
+     Transactions Table
+     ========================================== -->
+<div class="services-table-section">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="ph ph-list-dashes"></i>
+            آخر المعاملات
+        </h2>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>نوع الخدمة</th>
+                    <th>المبلغ</th>
+                    <th>العمولة</th>
+                    <th>هاتف العميل</th>
+                    <th>ملاحظات</th>
+                    <th>بواسطة</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.id }}</td>
+                    <td>
+                        <span class="badge badge-info">{{ txn.service_type.name }}</span>
+                    </td>
+                    <td style="font-weight: 700;">{{ txn.service_amount }} ج.م</td>
+                    <td>
+                        <span style="color: #16a34a; font-weight: 700;">{{ txn.commission }} ج.م</span>
+                    </td>
+                    <td>{{ txn.customer_phone|default:"-" }}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ txn.note|default:"-" }}
+                    </td>
+                    <td>{{ txn.created_by.get_full_name|default:txn.created_by.username|default:"-" }}</td>
+                    <td>{{ txn.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="ph ph-swap"></i>
+                            <h3>لا توجد معاملات</h3>
+                            <p>ابدأ بإضافة معاملات الخدمات.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if transactions.has_other_pages %}
+    <div class="pagination">
+        {% if transactions.has_previous %}
+            <a href="?{% if selected_type %}service_type={{ selected_type }}&{% endif %}{% if selected_user %}created_by={{ selected_user }}&{% endif %}page={{ transactions.previous_page_number }}"><i class="ph ph-caret-right"></i></a>
+        {% else %}
+            <span class="disabled"><i class="ph ph-caret-right"></i></span>
+        {% endif %}
+
+        {% for num in transactions.paginator.page_range %}
+            {% if transactions.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                <a href="?{% if selected_type %}service_type={{ selected_type }}&{% endif %}{% if selected_user %}created_by={{ selected_user }}&{% endif %}page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if transactions.has_next %}
+            <a href="?{% if selected_type %}service_type={{ selected_type }}&{% endif %}{% if selected_user %}created_by={{ selected_user }}&{% endif %}page={{ transactions.next_page_number }}"><i class="ph ph-caret-left"></i></a>
+        {% else %}
+            <span class="disabled"><i class="ph ph-caret-left"></i></span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // ==========================================
+    // Add Transaction Modal
+    // ==========================================
+    window.openAddTxnModal = function() {
+        document.getElementById('add-txn-modal').classList.add('open');
+    };
+
+    window.closeAddTxnModal = function() {
+        document.getElementById('add-txn-modal').classList.remove('open');
+    };
+
+    document.getElementById('add-txn-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeAddTxnModal();
+    });
+
+    // ==========================================
+    // Commission Preview Calculation
+    // ==========================================
+    const typeSelect = document.getElementById('txn-service-type');
+    const amountInput = document.getElementById('txn-amount');
+    const preview = document.getElementById('commission-preview');
+    const previewValue = document.getElementById('commission-value-display');
+
+    function updateCommissionPreview() {
+        const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+        const amount = parseFloat(amountInput.value) || 0;
+
+        if (!selectedOption || !selectedOption.value || amount <= 0) {
+            preview.classList.remove('visible');
+            return;
+        }
+
+        const commType = selectedOption.dataset.commissionType;
+        const commValue = parseFloat(selectedOption.dataset.commissionValue) || 0;
+
+        let commission = 0;
+        if (commType === 'percentage') {
+            commission = (amount * commValue / 100);
+        } else {
+            commission = commValue;
+        }
+
+        previewValue.textContent = commission.toFixed(2);
+        preview.classList.add('visible');
+    }
+
+    typeSelect.addEventListener('change', updateCommissionPreview);
+    amountInput.addEventListener('input', updateCommissionPreview);
+
+    // ==========================================
+    // Inline Add Service Type (AJAX from popup)
+    // ==========================================
+    window.toggleInlineAddType = function() {
+        const el = document.getElementById('inline-add-type');
+        el.classList.toggle('visible');
+        if (el.classList.contains('visible')) {
+            document.getElementById('new-type-name').focus();
+        }
+    };
+
+    window.addTypeAjax = async function() {
+        const nameInput = document.getElementById('new-type-name');
+        const commTypeSelect = document.getElementById('new-type-commission-type');
+        const commValueInput = document.getElementById('new-type-commission-value');
+        const feedback = document.getElementById('add-type-feedback');
+
+        const name = nameInput.value.trim();
+        const commissionType = commTypeSelect.value;
+        const commissionValue = commValueInput.value;
+
+        if (!name) {
+            feedback.textContent = 'يرجى إدخال اسم نوع الخدمة';
+            feedback.style.color = '#dc2626';
+            return;
+        }
+
+        if (!commissionValue || parseFloat(commissionValue) < 0) {
+            feedback.textContent = 'يرجى إدخال قيمة عمولة صحيحة';
+            feedback.style.color = '#dc2626';
+            return;
+        }
+
+        feedback.textContent = 'جاري الإضافة...';
+        feedback.style.color = '#64748b';
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        try {
+            const response = await fetch("{% url 'service_type_add' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    name: name,
+                    commission_type: commissionType,
+                    commission_value: commissionValue
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Add to service type select dropdown
+                const select = document.getElementById('txn-service-type');
+                const option = document.createElement('option');
+                option.value = data.id;
+                option.textContent = data.name;
+                option.dataset.commissionType = commissionType;
+                option.dataset.commissionValue = commissionValue;
+                option.selected = true;
+                select.appendChild(option);
+
+                // Reset
+                nameInput.value = '';
+                commValueInput.value = '';
+                feedback.textContent = '✓ ' + data.message;
+                feedback.style.color = '#16a34a';
+
+                // Update preview after adding
+                updateCommissionPreview();
+
+                setTimeout(function() {
+                    document.getElementById('inline-add-type').classList.remove('visible');
+                    feedback.textContent = '';
+                }, 1500);
+            } else {
+                feedback.textContent = data.message;
+                feedback.style.color = '#dc2626';
+            }
+        } catch (err) {
+            console.error(err);
+            feedback.textContent = 'حدث خطأ في الاتصال';
+            feedback.style.color = '#dc2626';
+        }
+    };
+
+    // Enter key for inline type name input
+    document.getElementById('new-type-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTypeAjax();
+        }
+    });
+
+})();
+</script>
+{% endblock %}

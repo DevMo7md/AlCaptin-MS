@@ -1,0 +1,423 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}إدارة تصنيفات المصروفات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Expense Categories Page Styles
+       ========================================== */
+
+    /* --- Back Link --- */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--color-gray-500);
+        margin-bottom: 1.25rem;
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+
+    .back-link:hover {
+        color: var(--color-orange-500);
+    }
+
+    /* --- Page Layout --- */
+    .categories-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .categories-layout {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    /* --- Add Category Card --- */
+    .add-cat-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+    }
+
+    .add-cat-card h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .add-cat-card h2 i {
+        color: var(--color-orange-500);
+    }
+
+    .add-cat-form {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .add-cat-form .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    .add-cat-form .form-label {
+        color: var(--color-navy-800);
+    }
+
+    .add-cat-form .form-control {
+        padding-right: 1rem;
+    }
+
+    /* --- Categories List Card --- */
+    .cat-list-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .cat-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .cat-list-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cat-list-header h2 i {
+        color: var(--color-orange-500);
+    }
+
+    .cat-count-badge {
+        background: rgba(232,119,46,.1);
+        color: var(--color-orange-500);
+        font-weight: 700;
+        font-size: 0.78rem;
+        padding: 0.2rem 0.65rem;
+        border-radius: 50px;
+    }
+
+    /* --- Category Row --- */
+    .cat-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+        transition: background var(--transition-fast);
+    }
+
+    .cat-row:last-child {
+        border-bottom: none;
+    }
+
+    .cat-row:hover {
+        background: var(--color-gray-50);
+    }
+
+    .cat-row-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .cat-row-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-sm);
+        background: rgba(59,130,246,.08);
+        color: #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .cat-row-name {
+        font-weight: 600;
+        color: var(--color-navy-800);
+        font-size: 0.95rem;
+    }
+
+    .cat-row-count {
+        font-size: 0.78rem;
+        color: var(--color-gray-500);
+    }
+
+    .cat-row-actions {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .cat-action-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all var(--transition-fast);
+    }
+
+    .cat-action-btn.edit {
+        background: rgba(232,119,46,.08);
+        color: var(--color-orange-500);
+    }
+
+    .cat-action-btn.edit:hover {
+        background: var(--color-orange-500);
+        color: white;
+    }
+
+    .cat-action-btn.delete {
+        background: rgba(239,68,68,.08);
+        color: var(--color-red-500);
+    }
+
+    .cat-action-btn.delete:hover {
+        background: var(--color-red-500);
+        color: white;
+    }
+
+    /* --- Empty State --- */
+    .cat-empty {
+        text-align: center;
+        padding: 2.5rem 1.5rem;
+        color: var(--color-gray-400);
+    }
+
+    .cat-empty i {
+        font-size: 2.5rem;
+        color: var(--color-gray-300);
+        margin-bottom: 0.75rem;
+    }
+
+    .cat-empty h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-navy-800);
+        margin-bottom: 0.35rem;
+    }
+
+    /* --- Edit Modal Inner --- */
+    .edit-cat-modal .modal {
+        max-width: 420px;
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-folders"></i>
+        إدارة تصنيفات المصروفات
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'expenses_page' %}" class="back-link" id="btn-back-expenses">
+    <i class="ph ph-arrow-right"></i> العودة للمصروفات
+</a>
+
+<div class="categories-layout">
+    <!-- ==========================================
+         Add New Category
+         ========================================== -->
+    <div class="add-cat-card">
+        <h2><i class="ph ph-plus-circle"></i> إضافة تصنيف جديد</h2>
+        <form method="POST" action="{% url 'expense_category_add' %}" class="add-cat-form" id="add-cat-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">اسم التصنيف</label>
+                <input type="text" name="name" class="form-control" required
+                       placeholder="مثال: كهرباء، إيجار، رواتب...">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" style="height: fit-content;">
+                <i class="ph ph-plus"></i> إضافة
+            </button>
+        </form>
+    </div>
+
+    <!-- ==========================================
+         Categories List
+         ========================================== -->
+    <div class="cat-list-card">
+        <div class="cat-list-header">
+            <h2><i class="ph ph-list-dashes"></i> التصنيفات</h2>
+            <span class="cat-count-badge">{{ categories|length }} تصنيف</span>
+        </div>
+
+        {% for cat in categories %}
+        <div class="cat-row" id="cat-row-{{ cat.id }}">
+            <div class="cat-row-info">
+                <div class="cat-row-icon">
+                    <i class="ph ph-tag"></i>
+                </div>
+                <div>
+                    <div class="cat-row-name">{{ cat.name }}</div>
+                    <div class="cat-row-count">{{ cat.expense_count }} مصروف</div>
+                </div>
+            </div>
+            <div class="cat-row-actions">
+                <button class="cat-action-btn edit" onclick="openEditCatModal({{ cat.id }}, '{{ cat.name }}')" title="تعديل">
+                    <i class="ph ph-pencil-simple"></i>
+                </button>
+                <button class="cat-action-btn delete" onclick="openDeleteCatModal({{ cat.id }}, '{{ cat.name }}')" title="حذف">
+                    <i class="ph ph-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="cat-empty">
+            <i class="ph ph-folders"></i>
+            <h3>لا توجد تصنيفات</h3>
+            <p>ابدأ بإضافة تصنيفات لتنظيم مصروفاتك.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ==========================================
+     Edit Category Modal
+     ========================================== -->
+<div class="modal-overlay edit-cat-modal" id="edit-cat-modal">
+    <div class="modal" style="max-width: 420px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-pencil-simple" style="color: var(--color-orange-500);"></i>
+                تعديل التصنيف
+            </h3>
+            <button class="modal-close" onclick="closeEditCatModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'expense_category_edit' %}" id="edit-cat-form">
+            {% csrf_token %}
+            <input type="hidden" name="category_id" id="edit-cat-id">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">اسم التصنيف</label>
+                    <input type="text" name="name" id="edit-cat-name" class="form-control" required
+                           style="padding-right: 1rem;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ph ph-check"></i> حفظ التعديل
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditCatModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================
+     Delete Category Modal
+     ========================================== -->
+<div class="modal-overlay" id="delete-cat-modal">
+    <div class="modal" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-warning" style="color: var(--color-red-500);"></i>
+                تأكيد حذف التصنيف
+            </h3>
+            <button class="modal-close" onclick="closeDeleteCatModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'expense_category_delete' %}" id="delete-cat-form">
+            {% csrf_token %}
+            <input type="hidden" name="category_id" id="delete-cat-id">
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 1rem; margin-bottom: 0.5rem;">هل أنت متأكد من حذف تصنيف "<span id="delete-cat-name-display" style="font-weight:700;"></span>"؟</p>
+                <p style="font-size: 0.85rem; color: var(--color-gray-500);">لن يتم الحذف إذا كانت هناك مصروفات مرتبطة بالتصنيف.</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="ph ph-trash"></i> حذف
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeDeleteCatModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // ==========================================
+    // Edit Category Modal
+    // ==========================================
+    window.openEditCatModal = function(id, name) {
+        document.getElementById('edit-cat-id').value = id;
+        document.getElementById('edit-cat-name').value = name;
+        document.getElementById('edit-cat-modal').classList.add('open');
+        document.getElementById('edit-cat-name').focus();
+    };
+
+    window.closeEditCatModal = function() {
+        document.getElementById('edit-cat-modal').classList.remove('open');
+    };
+
+    document.getElementById('edit-cat-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditCatModal();
+    });
+
+    // ==========================================
+    // Delete Category Modal
+    // ==========================================
+    window.openDeleteCatModal = function(id, name) {
+        document.getElementById('delete-cat-id').value = id;
+        document.getElementById('delete-cat-name-display').textContent = name;
+        document.getElementById('delete-cat-modal').classList.add('open');
+    };
+
+    window.closeDeleteCatModal = function() {
+        document.getElementById('delete-cat-modal').classList.remove('open');
+    };
+
+    document.getElementById('delete-cat-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteCatModal();
+    });
+
+})();
+</script>
+{% endblock %}

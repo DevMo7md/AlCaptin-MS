@@ -1,0 +1,836 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}التقارير المالية — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Reports Page Styles
+       ========================================== */
+
+    /* --- Page Header --- */
+    .reports-header {
+        margin-bottom: 2rem;
+    }
+
+    .reports-header h1 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .reports-header h1 i {
+        color: var(--color-orange-500);
+        font-size: 1.8rem;
+    }
+
+    .reports-header p {
+        color: var(--color-gray-500);
+        font-size: 0.92rem;
+        margin-top: 0.3rem;
+    }
+
+    /* --- Date Filter Card --- */
+    .filter-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--color-gray-100);
+    }
+
+    .filter-card-header i {
+        color: var(--color-orange-500);
+        font-size: 1.2rem;
+    }
+
+    .filter-card-header h2 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+    }
+
+    .filter-form {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-form .form-group {
+        flex: 1;
+        min-width: 180px;
+        margin-bottom: 0;
+    }
+
+    .filter-form .form-label {
+        color: var(--color-navy-800);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        display: block;
+    }
+
+    .filter-form .form-control {
+        padding: 0.7rem 1rem;
+        padding-right: 1rem;
+        font-size: 0.92rem;
+    }
+
+    .filter-form .btn-filter {
+        background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+        color: var(--color-white);
+        box-shadow: 0 4px 15px rgba(232,119,46,.3);
+        min-width: 140px;
+        height: 48px;
+    }
+
+    .filter-form .btn-filter:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+        color: var(--color-white);
+    }
+
+    /* Quick date buttons */
+    .quick-dates {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .quick-date-btn {
+        padding: 0.35rem 0.85rem;
+        border: 1px solid var(--color-gray-200);
+        border-radius: 50px;
+        background: var(--color-gray-50);
+        color: var(--color-gray-500);
+        font-size: 0.78rem;
+        font-weight: 600;
+        font-family: var(--font-family);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .quick-date-btn:hover {
+        border-color: var(--color-orange-500);
+        color: var(--color-orange-500);
+        background: rgba(232,119,46,.05);
+    }
+
+    .quick-date-btn.active {
+        background: var(--color-orange-500);
+        color: var(--color-white);
+        border-color: var(--color-orange-500);
+    }
+
+    /* --- Summary Cards --- */
+    .report-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .report-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .summary-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 3px;
+    }
+
+    .summary-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .summary-card.card-green::before  { background: #16a34a; }
+    .summary-card.card-red::before    { background: #dc2626; }
+    .summary-card.card-orange::before { background: var(--color-orange-500); }
+
+    .summary-card .summary-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 0.75rem;
+    }
+
+    .summary-card.card-green .summary-icon {
+        background: rgba(22,163,74,.1);
+        color: #16a34a;
+    }
+    .summary-card.card-red .summary-icon {
+        background: rgba(220,38,38,.1);
+        color: #dc2626;
+    }
+    .summary-card.card-orange .summary-icon {
+        background: rgba(232,119,46,.1);
+        color: var(--color-orange-500);
+    }
+
+    .summary-card h3 {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--color-gray-500);
+        margin-bottom: 0.3rem;
+    }
+
+    .summary-card .summary-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+    }
+
+    .summary-card .summary-value span {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-gray-500);
+    }
+
+    /* --- Detail Section Cards --- */
+    .report-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .report-sections {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .report-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: box-shadow var(--transition-base);
+    }
+
+    .report-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .report-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .report-card-header i {
+        font-size: 1.2rem;
+    }
+
+    .report-card-header.header-blue i    { color: #3b82f6; }
+    .report-card-header.header-cyan i    { color: #06b6d4; }
+    .report-card-header.header-amber i   { color: #f59e0b; }
+    .report-card-header.header-purple i  { color: #8b5cf6; }
+    .report-card-header.header-emerald i { color: #10b981; }
+
+    .report-card-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+    }
+
+    .report-card-header .header-badge {
+        margin-right: auto;
+        margin-left: 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 50px;
+    }
+
+    .header-badge.badge-blue   { background: rgba(59,130,246,.1);  color: #3b82f6; }
+    .header-badge.badge-cyan   { background: rgba(6,182,212,.1);   color: #06b6d4; }
+    .header-badge.badge-amber  { background: rgba(245,158,11,.1);  color: #f59e0b; }
+    .header-badge.badge-purple { background: rgba(139,92,246,.1);  color: #8b5cf6; }
+    .header-badge.badge-emerald{ background: rgba(16,185,129,.1);  color: #10b981; }
+
+    .report-card-body {
+        padding: 1.25rem 1.5rem;
+    }
+
+    /* Stat rows */
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--color-gray-50);
+    }
+
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .stat-row .stat-label {
+        font-size: 0.88rem;
+        color: var(--color-gray-500);
+        font-weight: 500;
+    }
+
+    .stat-row .stat-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+    }
+
+    .stat-row.stat-highlight {
+        background: var(--color-gray-50);
+        margin: 0 -1.5rem;
+        padding: 0.7rem 1.5rem;
+        border-radius: 0;
+    }
+
+    .stat-row.stat-highlight .stat-value {
+        color: var(--color-orange-500);
+    }
+
+    /* --- Full-width report card --- */
+    .report-card-full {
+        grid-column: 1 / -1;
+    }
+
+    /* --- Table inside report card --- */
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        background: var(--color-gray-50);
+        padding: 0.75rem 1.25rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--color-gray-500);
+        text-align: right;
+    }
+
+    .report-table td {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.88rem;
+        color: var(--color-navy-800);
+        border-top: 1px solid var(--color-gray-100);
+    }
+
+    .report-table tr:hover td {
+        background: var(--color-gray-50);
+    }
+
+    .text-green  { color: #16a34a; }
+    .text-red    { color: #dc2626; }
+    .text-orange { color: var(--color-orange-500); }
+
+    /* --- Breakdown list (expenses by category, services by type) --- */
+    .breakdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid var(--color-gray-50);
+    }
+
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .breakdown-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .breakdown-dot.dot-amber  { background: #f59e0b; }
+    .breakdown-dot.dot-purple { background: #8b5cf6; }
+
+    .breakdown-name {
+        flex: 1;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--color-navy-800);
+    }
+
+    .breakdown-value {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+    }
+
+    /* --- Bar chart (CSS-only) --- */
+    .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .bar-label {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: var(--color-gray-500);
+        width: 80px;
+        flex-shrink: 0;
+        text-align: left;
+    }
+
+    .bar-track {
+        flex: 1;
+        height: 24px;
+        background: var(--color-gray-100);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+        transition: width var(--transition-slow);
+        min-width: 2px;
+    }
+
+    .bar-fill.fill-blue {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    .bar-amount {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        width: 100px;
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    /* --- No data state --- */
+    .no-data {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--color-gray-400);
+    }
+
+    .no-data i {
+        font-size: 3rem;
+        margin-bottom: 0.75rem;
+        display: block;
+        color: var(--color-gray-300);
+    }
+
+    .no-data p {
+        font-size: 0.92rem;
+    }
+
+    /* --- Print button --- */
+    .btn-print {
+        background: transparent;
+        color: var(--color-gray-500);
+        border: 1px solid var(--color-gray-200);
+    }
+
+    .btn-print:hover {
+        background: var(--color-gray-50);
+        color: var(--color-navy-800);
+        transform: translateY(-1px);
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-header">
+    <div class="header-actions">
+        <div>
+            <h1>
+                <i class="ph ph-chart-bar"></i>
+                التقارير المالية
+            </h1>
+            <p>تقارير مفصلة عن الأداء المالي حسب الفترة الزمنية</p>
+        </div>
+        {% if report %}
+        <button class="btn btn-print" onclick="window.print()" id="btn-print">
+            <i class="ph ph-printer"></i>
+            طباعة التقرير
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ====== Date Filter ====== -->
+<div class="filter-card" id="filter-card">
+    <div class="filter-card-header">
+        <i class="ph ph-calendar-blank"></i>
+        <h2>اختر الفترة الزمنية</h2>
+    </div>
+    <form method="get" action="{% url 'reports_page' %}" class="filter-form" id="filter-form">
+        <div class="form-group">
+            <label class="form-label" for="date_from">من تاريخ</label>
+            <input type="date" class="form-control" id="date_from" name="date_from"
+                   value="{{ date_from|date:'Y-m-d' }}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="date_to">إلى تاريخ</label>
+            <input type="date" class="form-control" id="date_to" name="date_to"
+                   value="{{ date_to|date:'Y-m-d' }}" required>
+        </div>
+        <button type="submit" class="btn btn-filter" id="btn-generate-report">
+            <i class="ph ph-magnifying-glass"></i>
+            عرض التقرير
+        </button>
+    </form>
+    <div class="quick-dates">
+        <button type="button" class="quick-date-btn" data-range="today">اليوم</button>
+        <button type="button" class="quick-date-btn" data-range="week">هذا الأسبوع</button>
+        <button type="button" class="quick-date-btn" data-range="month">هذا الشهر</button>
+        <button type="button" class="quick-date-btn" data-range="last_month">الشهر الماضي</button>
+        <button type="button" class="quick-date-btn" data-range="quarter">آخر 3 أشهر</button>
+        <button type="button" class="quick-date-btn" data-range="year">هذا العام</button>
+    </div>
+</div>
+
+{% if report %}
+<!-- ====== Summary Cards ====== -->
+<div class="report-summary">
+    <div class="summary-card card-green" id="summary-income">
+        <div class="summary-icon">
+            <i class="ph ph-arrow-circle-down"></i>
+        </div>
+        <h3>إجمالي الدخل</h3>
+        <div class="summary-value">{{ report.total_income|floatformat:2 }} <span>ج.م</span></div>
+    </div>
+    <div class="summary-card card-red" id="summary-outcome">
+        <div class="summary-icon">
+            <i class="ph ph-arrow-circle-up"></i>
+        </div>
+        <h3>إجمالي المصروفات والمشتريات</h3>
+        <div class="summary-value">{{ report.total_outcome|floatformat:2 }} <span>ج.م</span></div>
+    </div>
+    <div class="summary-card card-orange" id="summary-profit">
+        <div class="summary-icon">
+            <i class="ph ph-wallet"></i>
+        </div>
+        <h3>صافي الربح</h3>
+        <div class="summary-value">{{ report.net_profit|floatformat:2 }} <span>ج.م</span></div>
+    </div>
+</div>
+
+<!-- ====== Detail Cards ====== -->
+<div class="report-sections">
+    <!-- Sales Card -->
+    <div class="report-card" id="report-sales">
+        <div class="report-card-header header-blue">
+            <i class="ph ph-shopping-cart"></i>
+            <h3>المبيعات</h3>
+            <span class="header-badge badge-blue">{{ report.sales_count }} فاتورة</span>
+        </div>
+        <div class="report-card-body">
+            <div class="stat-row">
+                <span class="stat-label">إيرادات المبيعات</span>
+                <span class="stat-value">{{ report.sales_revenue|floatformat:2 }} ج.م</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">تكلفة البضاعة المباعة</span>
+                <span class="stat-value text-red">{{ report.sales_cogs|floatformat:2 }} ج.م</span>
+            </div>
+            <div class="stat-row stat-highlight">
+                <span class="stat-label">أرباح المبيعات</span>
+                <span class="stat-value">{{ report.sales_profit|floatformat:2 }} ج.م</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchases Card -->
+    <div class="report-card" id="report-purchases">
+        <div class="report-card-header header-cyan">
+            <i class="ph ph-truck"></i>
+            <h3>المشتريات</h3>
+            <span class="header-badge badge-cyan">{{ report.purchases_count }} فاتورة</span>
+        </div>
+        <div class="report-card-body">
+            <div class="stat-row stat-highlight">
+                <span class="stat-label">إجمالي المشتريات</span>
+                <span class="stat-value">{{ report.purchases_total|floatformat:2 }} ج.م</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expenses Card -->
+    <div class="report-card" id="report-expenses">
+        <div class="report-card-header header-amber">
+            <i class="ph ph-currency-dollar"></i>
+            <h3>المصروفات</h3>
+            <span class="header-badge badge-amber">{{ report.expenses_count }} مصروف</span>
+        </div>
+        <div class="report-card-body">
+            <div class="stat-row stat-highlight">
+                <span class="stat-label">إجمالي المصروفات</span>
+                <span class="stat-value">{{ report.expenses_total|floatformat:2 }} ج.م</span>
+            </div>
+            {% if report.expenses_by_category %}
+            <div style="margin-top: 1rem;">
+                {% for item in report.expenses_by_category %}
+                <div class="breakdown-item">
+                    <div class="breakdown-dot dot-amber"></div>
+                    <span class="breakdown-name">{{ item.category__name }}</span>
+                    <span class="breakdown-value">{{ item.total|floatformat:2 }} ج.م</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Services Card -->
+    <div class="report-card" id="report-services">
+        <div class="report-card-header header-purple">
+            <i class="ph ph-swap"></i>
+            <h3>الخدمات</h3>
+            <span class="header-badge badge-purple">{{ report.service_count }} معاملة</span>
+        </div>
+        <div class="report-card-body">
+            <div class="stat-row stat-highlight">
+                <span class="stat-label">أرباح الخدمات (العمولات)</span>
+                <span class="stat-value">{{ report.service_income|floatformat:2 }} ج.م</span>
+            </div>
+            {% if report.services_by_type %}
+            <div style="margin-top: 1rem;">
+                {% for item in report.services_by_type %}
+                <div class="breakdown-item">
+                    <div class="breakdown-dot dot-purple"></div>
+                    <span class="breakdown-name">{{ item.service_type__name }} ({{ item.count }})</span>
+                    <span class="breakdown-value">{{ item.total_commission|floatformat:2 }} ج.م</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Installments Card -->
+    <div class="report-card" id="report-installments">
+        <div class="report-card-header header-emerald">
+            <i class="ph ph-calendar-check"></i>
+            <h3>التقسيط</h3>
+            <span class="header-badge badge-emerald">{{ report.installment_count }} عملية</span>
+        </div>
+        <div class="report-card-body">
+            <div class="stat-row">
+                <span class="stat-label">محصلات الأقساط</span>
+                <span class="stat-value">{{ report.installment_collected|floatformat:2 }} ج.م</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">أرباح محصلة</span>
+                <span class="stat-value text-orange">{{ report.installment_profit|floatformat:2 }} ج.م</span>
+            </div>
+            <div class="stat-row stat-highlight">
+                <span class="stat-label">إجمالي مبيعات التقسيط للمدة</span>
+                <span class="stat-value">{{ report.installment_total_value|floatformat:2 }} ج.م</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====== Top Products ====== -->
+{% if report.top_products %}
+<div class="report-sections">
+    <div class="report-card report-card-full" id="report-top-products">
+        <div class="report-card-header header-blue">
+            <i class="ph ph-star"></i>
+            <h3>أكثر المنتجات مبيعاً</h3>
+        </div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>المنتج</th>
+                    <th>الكمية المباعة</th>
+                    <th>الإيرادات</th>
+                    <th>التكلفة</th>
+                    <th>الربح</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in report.top_products %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ p.product__name }}</td>
+                    <td>{{ p.total_qty }}</td>
+                    <td>{{ p.total_revenue|floatformat:2 }} ج.م</td>
+                    <td class="text-red">{{ p.total_cogs|floatformat:2 }} ج.م</td>
+                    <td class="text-green">{{ p.profit|floatformat:2 }} ج.م</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ====== Daily Sales Trend (CSS bar chart) ====== -->
+{% if report.daily_sales %}
+<div class="report-sections">
+    <div class="report-card report-card-full" id="report-daily-chart">
+        <div class="report-card-header header-blue">
+            <i class="ph ph-chart-line-up"></i>
+            <h3>اتجاه المبيعات اليومي</h3>
+        </div>
+        <div class="report-card-body">
+            <div class="bar-chart">
+                {% for day in report.daily_sales %}
+                <div class="bar-row">
+                    <span class="bar-label">{{ day.day_str }}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill fill-blue"
+                             style="width: {% widthratio day.revenue max_daily_revenue 100 %}%"></div>
+                    </div>
+                    <span class="bar-amount">{{ day.revenue|floatformat:0 }} ج.م</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- No report yet -->
+<div class="report-card" style="margin-top: 1rem;">
+    <div class="no-data">
+        <i class="ph ph-chart-bar"></i>
+        <p>اختر الفترة الزمنية ثم اضغط "عرض التقرير" لعرض التقرير المالي</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // Quick date range buttons
+    const quickBtns = document.querySelectorAll('.quick-date-btn');
+    const dateFrom  = document.getElementById('date_from');
+    const dateTo    = document.getElementById('date_to');
+    const form      = document.getElementById('filter-form');
+
+    function formatDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+
+    quickBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const range = this.dataset.range;
+            
+            // Use server's timezone-aware 'now' instead of browser OS date
+            const serverTodayStr = "{% now 'Y-m-d' %}";
+            const parts = serverTodayStr.split('-');
+            const today = new Date(parts[0], parts[1] - 1, parts[2]);
+            
+            let from, to;
+
+            switch (range) {
+                case 'today':
+                    from = to = today;
+                    break;
+                case 'week':
+                    // Start of week (Saturday for Arabic locale)
+                    from = new Date(today);
+                    const dayOfWeek = today.getDay();
+                    const diff = (dayOfWeek + 1) % 7; // Saturday = 0
+                    from.setDate(today.getDate() - diff);
+                    to = today;
+                    break;
+                case 'month':
+                    from = new Date(today.getFullYear(), today.getMonth(), 1);
+                    to = today;
+                    break;
+                case 'last_month':
+                    from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    to = new Date(today.getFullYear(), today.getMonth(), 0);
+                    break;
+                case 'quarter':
+                    from = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+                    to = today;
+                    break;
+                case 'year':
+                    from = new Date(today.getFullYear(), 0, 1);
+                    to = today;
+                    break;
+            }
+
+            dateFrom.value = formatDate(from);
+            dateTo.value = formatDate(to);
+
+            // Highlight active button
+            quickBtns.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+
+            // Auto-submit
+            form.submit();
+        });
+    });
+})();
+</script>
+{% endblock %}

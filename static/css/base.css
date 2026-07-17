@@ -1,0 +1,328 @@
+/* ============================================
+   Al Captin MS — Design System
+   Colors extracted from dashboard mockup:
+   - Navy:   #1e293b (dark bg)
+   - Orange: #e8772e (accent/CTA)
+   - White:  #ffffff (cards/text)
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ---------- CSS Custom Properties ---------- */
+:root {
+    --color-navy-900: #0f172a;
+    --color-navy-800: #1e293b;
+    --color-navy-700: #2d3a4e;
+    --color-navy-600: #3b4d66;
+    --color-navy-500: #4a6280;
+
+    --color-orange-500: #e8772e;
+    --color-orange-400: #f0923e;
+    --color-orange-600: #d4651e;
+    --color-orange-glow: rgba(232, 119, 46, .35);
+
+    --color-white: #ffffff;
+    --color-gray-50: #f8fafc;
+    --color-gray-100: #f1f5f9;
+    --color-gray-200: #e2e8f0;
+    --color-gray-300: #cbd5e1;
+    --color-gray-400: #94a3b8;
+    --color-gray-500: #64748b;
+
+    --color-red-500: #ef4444;
+    --color-green-500: #22c55e;
+
+    --font-family: 'Cairo', sans-serif;
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+    --shadow-md: 0 4px 14px rgba(0,0,0,.12);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,.18);
+    --shadow-glow: 0 0 30px var(--color-orange-glow);
+
+    --transition-fast: .2s ease;
+    --transition-base: .35s cubic-bezier(.4,0,.2,1);
+    --transition-slow: .6s cubic-bezier(.4,0,.2,1);
+}
+
+/* ---------- Reset & Base ---------- */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--color-gray-100);
+    color: var(--color-navy-800);
+    direction: rtl;
+    text-align: right;
+    line-height: 1.7;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--color-orange-500);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ---------- Utility Classes ---------- */
+.text-center { text-align: center; }
+.text-orange { color: var(--color-orange-500); }
+.text-gray   { color: var(--color-gray-400); }
+.text-sm     { font-size: .875rem; }
+.text-xs     { font-size: .75rem; }
+
+.mt-1 { margin-top: .5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: .5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+
+/* ---------- Buttons ---------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .75rem 1.75rem;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    outline: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.btn:hover::after {
+    opacity: 1;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+    color: var(--color-white);
+    box-shadow: 0 4px 15px rgba(232,119,46,.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+    color: var(--color-white);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--color-orange-500);
+    border: 2px solid var(--color-orange-500);
+}
+
+.btn-outline:hover {
+    background: var(--color-orange-500);
+    color: var(--color-white);
+    transform: translateY(-2px);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* ---------- Form Controls ---------- */
+.form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--color-gray-300);
+    margin-bottom: .5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: .85rem 1.15rem;
+    padding-right: 3rem;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    color: var(--color-navy-800);
+    background: var(--color-white);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: all var(--transition-base);
+    direction: rtl;
+}
+
+.form-control::placeholder {
+    color: var(--color-gray-400);
+}
+
+.form-control:focus {
+    border-color: var(--color-orange-500);
+    background: var(--color-white);
+    box-shadow: 0 0 0 4px rgba(232,119,46,.12);
+}
+
+.form-icon {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    color: var(--color-gray-500);
+    font-size: 1.1rem;
+    pointer-events: none;
+    transition: color var(--transition-fast);
+}
+
+.form-group:focus-within .form-icon {
+    color: var(--color-orange-500);
+}
+
+/* Password toggle */
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--color-gray-500);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: .25rem;
+    transition: color var(--transition-fast);
+}
+
+.password-toggle:hover {
+    color: var(--color-orange-500);
+}
+
+/* ---------- Alerts / Messages ---------- */
+.alert {
+    padding: .85rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-size: .9rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    animation: slideDown .35s ease;
+}
+
+.alert-error {
+    background: rgba(239,68,68,.12);
+    border: 1px solid rgba(239,68,68,.3);
+    color: #fca5a5;
+}
+
+.alert-success {
+    background: rgba(34,197,94,.12);
+    border: 1px solid rgba(34,197,94,.3);
+    color: #86efac;
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(232,119,46,.2); }
+    50%      { box-shadow: 0 0 40px rgba(232,119,46,.4); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-gray-300);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-orange-500);
+}

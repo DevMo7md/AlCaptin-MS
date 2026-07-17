@@ -1,0 +1,426 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}الإعدادات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Settings Page Styles
+       ========================================== */
+
+    .settings-header {
+        margin-bottom: 2rem;
+    }
+
+    .settings-header h1 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .settings-header h1 i {
+        color: var(--color-orange-500);
+        font-size: 1.8rem;
+    }
+
+    .settings-header p {
+        color: var(--color-gray-500);
+        font-size: 0.92rem;
+        margin-top: 0.3rem;
+    }
+
+    /* --- Section Card --- */
+    .settings-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+        transition: box-shadow var(--transition-base);
+    }
+
+    .settings-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .settings-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--color-gray-100);
+    }
+
+    .settings-card-header i {
+        font-size: 1.5rem;
+        color: var(--color-orange-500);
+    }
+
+    .settings-card-header h2 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        margin: 0;
+    }
+
+    .settings-card-header .badge {
+        margin-right: auto;
+        margin-left: 0;
+        background: rgba(232, 119, 46, .1);
+        color: var(--color-orange-500);
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+    }
+
+    .settings-card-body p.description {
+        color: var(--color-gray-500);
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.7;
+    }
+
+    /* --- Backup Layout --- */
+    .backup-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .backup-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    /* --- Backup Action Card --- */
+    .backup-action {
+        background: var(--color-gray-50);
+        border: 2px dashed var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-align: center;
+        transition: all var(--transition-base);
+    }
+
+    .backup-action:hover {
+        border-color: var(--color-orange-500);
+        background: rgba(232, 119, 46, .03);
+    }
+
+    .backup-action .action-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+
+    .backup-action.create .action-icon {
+        background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+        color: var(--color-white);
+        box-shadow: 0 4px 15px rgba(232, 119, 46, .3);
+    }
+
+    .backup-action.restore .action-icon {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: var(--color-white);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, .3);
+    }
+
+    .backup-action h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        margin-bottom: 0.5rem;
+    }
+
+    .backup-action p {
+        color: var(--color-gray-500);
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.6;
+    }
+
+    /* --- File Upload Zone --- */
+    .file-upload-zone {
+        border: 2px dashed var(--color-gray-300);
+        border-radius: var(--radius-sm);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .file-upload-zone:hover {
+        border-color: var(--color-orange-500);
+        background: rgba(232, 119, 46, .04);
+    }
+
+    .file-upload-zone.has-file {
+        border-color: var(--color-green-500);
+        background: rgba(34, 197, 94, .05);
+    }
+
+    .file-upload-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+    }
+
+    .file-upload-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        pointer-events: none;
+    }
+
+    .file-upload-content i {
+        font-size: 1.5rem;
+        color: var(--color-gray-400);
+        transition: color var(--transition-fast);
+    }
+
+    .file-upload-zone:hover .file-upload-content i {
+        color: var(--color-orange-500);
+    }
+
+    .file-upload-zone.has-file .file-upload-content i {
+        color: var(--color-green-500);
+    }
+
+    .file-upload-content span {
+        font-size: 0.82rem;
+        color: var(--color-gray-500);
+        font-weight: 500;
+    }
+
+    .file-upload-content .file-name {
+        font-size: 0.8rem;
+        color: var(--color-green-500);
+        font-weight: 600;
+        word-break: break-all;
+    }
+
+    /* --- Buttons --- */
+    .btn-backup-create {
+        background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+        color: var(--color-white);
+        box-shadow: 0 4px 15px rgba(232, 119, 46, .3);
+        width: 100%;
+    }
+
+    .btn-backup-create:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+        color: var(--color-white);
+    }
+
+    .btn-backup-restore {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: var(--color-white);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, .3);
+        width: 100%;
+    }
+
+    .btn-backup-restore:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(59, 130, 246, .35);
+        color: var(--color-white);
+    }
+
+    .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* --- Spinner --- */
+    .btn .spinner {
+        display: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255,255,255,.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin .6s linear infinite;
+    }
+
+    .btn.loading .spinner {
+        display: inline-block;
+    }
+
+    .btn.loading .btn-text {
+        display: none;
+    }
+
+    /* --- Warning Box --- */
+    .restore-warning {
+        background: rgba(239, 68, 68, .08);
+        border: 1px solid rgba(239, 68, 68, .2);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.82rem;
+        color: var(--color-red-500);
+        line-height: 1.6;
+    }
+
+    .restore-warning i {
+        font-size: 1.1rem;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-header">
+    <h1>
+        <i class="ph ph-gear"></i>
+        الإعدادات
+    </h1>
+    <p>إدارة النسخ الاحتياطي واستعادة البيانات</p>
+</div>
+
+<!-- Backup Section -->
+<div class="settings-card">
+    <div class="settings-card-header">
+        <i class="ph ph-database"></i>
+        <h2>النسخ الاحتياطي</h2>
+        <span class="badge">SQLite</span>
+    </div>
+    <div class="settings-card-body">
+        <p class="description">
+            قم بإنشاء نسخة احتياطية من قاعدة البيانات الحالية أو استعادة نسخة سابقة.
+            النسخ الاحتياطية يتم حفظها بتاريخ ووقت الإنشاء.
+        </p>
+
+        <div class="backup-grid">
+            <!-- Create Backup -->
+            <div class="backup-action create">
+                <div class="action-icon">
+                    <i class="ph ph-download-simple"></i>
+                </div>
+                <h3>إنشاء نسخة احتياطية</h3>
+                <p>سيتم إنشاء نسخة من قاعدة البيانات الحالية وحفظها بصيغة ملف SQLite</p>
+                <form method="post" action="{% url 'backup_create' %}" id="backup-create-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-backup-create" id="btn-create-backup">
+                        <span class="btn-text">
+                            <i class="ph ph-download-simple"></i>
+                            إنشاء نسخة احتياطية
+                        </span>
+                        <span class="spinner"></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Restore Backup -->
+            <div class="backup-action restore">
+                <div class="action-icon">
+                    <i class="ph ph-upload-simple"></i>
+                </div>
+                <h3>استعادة نسخة احتياطية</h3>
+                <p>قم برفع ملف قاعدة بيانات SQLite سابق لاستعادة البيانات</p>
+                <form method="post" action="{% url 'backup_restore' %}" enctype="multipart/form-data" id="backup-restore-form">
+                    {% csrf_token %}
+                    <div class="file-upload-zone" id="file-upload-zone">
+                        <input type="file" name="backup_file" id="backup-file-input" accept=".sqlite3,.sqlite,.db">
+                        <div class="file-upload-content">
+                            <i class="ph ph-cloud-arrow-up"></i>
+                            <span id="file-upload-label">اضغط لاختيار ملف SQLite</span>
+                        </div>
+                    </div>
+                    <div class="restore-warning">
+                        <i class="ph ph-warning"></i>
+                        <span>تحذير: استعادة النسخة ستحل محل قاعدة البيانات الحالية بالكامل. تأكد من إنشاء نسخة احتياطية أولاً.</span>
+                    </div>
+                    <button type="submit" class="btn btn-backup-restore" id="btn-restore-backup" disabled>
+                        <span class="btn-text">
+                            <i class="ph ph-upload-simple"></i>
+                            استعادة النسخة الاحتياطية
+                        </span>
+                        <span class="spinner"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // --- File Upload Display ---
+    const fileInput = document.getElementById('backup-file-input');
+    const fileLabel = document.getElementById('file-upload-label');
+    const fileZone  = document.getElementById('file-upload-zone');
+    const restoreBtn = document.getElementById('btn-restore-backup');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                const fileName = this.files[0].name;
+                fileLabel.textContent = fileName;
+                fileLabel.classList.add('file-name');
+                fileZone.classList.add('has-file');
+                restoreBtn.disabled = false;
+            } else {
+                fileLabel.textContent = 'اضغط لاختيار ملف SQLite';
+                fileLabel.classList.remove('file-name');
+                fileZone.classList.remove('has-file');
+                restoreBtn.disabled = true;
+            }
+        });
+    }
+
+    // --- Create Backup: disable button + show spinner ---
+    const createForm = document.getElementById('backup-create-form');
+    const createBtn  = document.getElementById('btn-create-backup');
+
+    if (createForm && createBtn) {
+        createForm.addEventListener('submit', function() {
+            createBtn.disabled = true;
+            createBtn.classList.add('loading');
+        });
+    }
+
+    // --- Restore Backup: disable button + show spinner ---
+    const restoreForm = document.getElementById('backup-restore-form');
+
+    if (restoreForm && restoreBtn) {
+        restoreForm.addEventListener('submit', function(e) {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                e.preventDefault();
+                return;
+            }
+            restoreBtn.disabled = true;
+            restoreBtn.classList.add('loading');
+        });
+    }
+})();
+</script>
+{% endblock %}

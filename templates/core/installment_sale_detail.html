@@ -1,0 +1,608 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}تفاصيل التقسيط #{{ sale.id }} — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Back Button */
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        transition: 0.2s;
+    }
+    .btn-back:hover {
+        background: #cbd5e1;
+        color: #0f172a;
+    }
+
+    /* Detail Layout */
+    .detail-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    @media (min-width: 1024px) {
+        .detail-layout {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+
+    /* Section Card */
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .section-header {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .section-header i { color: var(--color-orange-500); }
+
+    /* Info Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+    .info-item {
+        padding: 0.65rem 0.85rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #f1f5f9;
+    }
+    .info-item .label {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #94a3b8;
+        margin-bottom: 0.15rem;
+    }
+    .info-item .value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        border: 1.5px solid #f1f5f9;
+        text-align: center;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+    }
+    .summary-card .sc-label {
+        font-size: 0.78rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-bottom: 0.35rem;
+    }
+    .summary-card .sc-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .summary-card.green .sc-value { color: #15803d; }
+    .summary-card.orange .sc-value { color: var(--color-orange-500); }
+    .summary-card.red .sc-value { color: #b91c1c; }
+    .summary-card.blue .sc-value { color: #1d4ed8; }
+
+    /* Installments Table */
+    .inst-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .inst-table th, .inst-table td {
+        padding: 0.85rem 1rem;
+        text-align: right;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .inst-table th {
+        background: #1e293b;
+        color: white;
+        font-weight: 600;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+    .inst-table th:first-child { border-radius: 0 8px 8px 0; }
+    .inst-table th:last-child { border-radius: 8px 0 0 8px; }
+    .inst-table tbody tr { transition: background 0.15s ease; }
+    .inst-table tbody tr:hover { background: #f8fafc; }
+    .inst-table tbody tr.is-paid { background: rgba(34,197,94,.04); }
+    .inst-table tbody tr.is-down-payment {
+        background: rgba(232,119,46,.04);
+        border-bottom: 2px solid rgba(232,119,46,.15);
+    }
+
+    /* Custom checkbox */
+    .paid-checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .paid-checkbox {
+        width: 22px;
+        height: 22px;
+        accent-color: var(--color-orange-500);
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .paid-checkbox:hover {
+        transform: scale(1.15);
+    }
+
+    /* Paid status text */
+    .paid-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .paid-status.paid {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+    .paid-status.unpaid {
+        background: rgba(239,68,68,.08);
+        color: #dc2626;
+    }
+
+    /* Edit Form */
+    .edit-form .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+    }
+    .edit-form label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.25rem;
+    }
+    .edit-form input, .edit-form textarea {
+        width: 100%;
+        padding: 0.6rem 0.85rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: #1e293b;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .edit-form input:focus, .edit-form textarea:focus {
+        outline: none;
+        border-color: var(--color-orange-500);
+        box-shadow: 0 0 0 3px rgba(232,119,46,.12);
+    }
+    .edit-form textarea { resize: vertical; min-height: 55px; }
+
+    .form-section-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--color-orange-500);
+        margin: 1rem 0 0.65rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 2px solid rgba(232,119,46,.15);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+        color: white;
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        box-shadow: 0 4px 12px rgba(232,119,46,.25);
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(232,119,46,.35);
+    }
+
+    /* Completed banner */
+    .completed-banner {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        border: 1px solid #86efac;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin-bottom: 1.5rem;
+        color: #15803d;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .completed-banner i { font-size: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <a href="{% url 'installment_sales_page' %}" class="btn-back">
+        <i class="ph ph-arrow-right"></i> العودة لقائمة التقسيط
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% if sale.is_completed %}
+<div class="completed-banner" id="completed-banner">
+    <i class="ph ph-check-circle"></i>
+    تم سداد جميع الأقساط بالكامل!
+</div>
+{% endif %}
+
+<!-- Summary Cards -->
+<div class="summary-cards">
+    <div class="summary-card">
+        <div class="sc-label">السعر الإجمالي</div>
+        <div class="sc-value">{{ sale.installment_sale_price|floatformat:2 }} ج.م</div>
+    </div>
+    <div class="summary-card green">
+        <div class="sc-label">المدفوع</div>
+        <div class="sc-value" id="sc-total-paid">{{ sale.total_paid|floatformat:2 }} ج.م</div>
+    </div>
+    <div class="summary-card red">
+        <div class="sc-label">المتبقي</div>
+        <div class="sc-value" id="sc-remaining">{{ sale.remaining_amount|floatformat:2 }} ج.م</div>
+    </div>
+    <div class="summary-card blue">
+        <div class="sc-label">الربح المحصّل</div>
+        <div class="sc-value" id="sc-collected-profit">{{ sale.collected_profit|floatformat:2 }} ج.م</div>
+    </div>
+    <div class="summary-card orange">
+        <div class="sc-label">إجمالي الربح</div>
+        <div class="sc-value">{{ sale.total_profit|floatformat:2 }} ج.م</div>
+    </div>
+</div>
+
+<div class="detail-layout">
+    <!-- Left Column: Installments Table -->
+    <div>
+        <!-- Product Info -->
+        <div class="section-card">
+            <h2 class="section-header"><i class="ph ph-package"></i> بيانات المنتج</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">المنتج</div>
+                    <div class="value">{{ sale.product.name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">الكمية</div>
+                    <div class="value">{{ sale.quantity }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">سعر التقسيط</div>
+                    <div class="value">{{ sale.installment_sale_price }} ج.م</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">التكلفة (COGS)</div>
+                    <div class="value" style="color: #b91c1c;">{{ sale.cogs }} ج.م</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">المقدم</div>
+                    <div class="value" style="color: var(--color-orange-500);">{{ sale.down_payment|floatformat:2 }} ج.م</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">قسط شهري</div>
+                    <div class="value">{{ sale.installment_amount|floatformat:2 }} ج.م</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">عدد الأقساط</div>
+                    <div class="value">{{ sale.number_of_installments }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">تاريخ التسجيل</div>
+                    <div class="value">{{ sale.created_at|date:"Y-m-d H:i" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Installments Table -->
+        <div class="section-card">
+            <h2 class="section-header"><i class="ph ph-list-checks"></i> جدول الأقساط</h2>
+            <div style="overflow-x: auto; border-radius: 8px;">
+                <table class="inst-table">
+                    <thead>
+                        <tr>
+                            <th>الدفعة</th>
+                            <th>المبلغ</th>
+                            <th>نصيب الربح</th>
+                            <th>الحالة</th>
+                            <th>تاريخ السداد</th>
+                            <th>سداد</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inst in installments %}
+                        <tr id="inst-row-{{ inst.id }}"
+                            class="{% if inst.is_paid %}is-paid{% endif %} {% if inst.installment_number == 0 %}is-down-payment{% endif %}">
+                            <td style="font-weight: 600;">
+                                {% if inst.installment_number == 0 %}
+                                    <i class="ph ph-wallet" style="color: var(--color-orange-500);"></i> المقدم
+                                {% else %}
+                                    القسط {{ inst.installment_number }}
+                                {% endif %}
+                            </td>
+                            <td style="font-weight: 600;">{{ inst.amount }} ج.م</td>
+                            <td style="color: #15803d;">{{ inst.profit_portion }} ج.م</td>
+                            <td>
+                                <span class="paid-status {% if inst.is_paid %}paid{% else %}unpaid{% endif %}" id="status-{{ inst.id }}">
+                                    {% if inst.is_paid %}
+                                        <i class="ph ph-check-circle"></i> تم السداد
+                                    {% else %}
+                                        <i class="ph ph-clock"></i> لم يسدد
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td id="paid-at-{{ inst.id }}">
+                                {% if inst.paid_at %}
+                                    {{ inst.paid_at|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="paid-checkbox-wrapper">
+                                    <input type="checkbox"
+                                           class="paid-checkbox"
+                                           id="cb-{{ inst.id }}"
+                                           data-id="{{ inst.id }}"
+                                           {% if inst.is_paid %}checked{% endif %}
+                                           onchange="togglePaid({{ inst.id }}, this)">
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Customer / Guarantor / Edit -->
+    <div>
+        <!-- Customer Info -->
+        <div class="section-card">
+            <h2 class="section-header"><i class="ph ph-user"></i> بيانات العميل</h2>
+            <div class="info-grid" style="grid-template-columns: 1fr;">
+                <div class="info-item">
+                    <div class="label">الاسم</div>
+                    <div class="value">{{ sale.customer_name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">الهاتف</div>
+                    <div class="value">{{ sale.customer_phone }}</div>
+                </div>
+                {% if sale.customer_id_number %}
+                <div class="info-item">
+                    <div class="label">الرقم القومي</div>
+                    <div class="value">{{ sale.customer_id_number }}</div>
+                </div>
+                {% endif %}
+                {% if sale.customer_address %}
+                <div class="info-item">
+                    <div class="label">العنوان</div>
+                    <div class="value">{{ sale.customer_address }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if sale.guarantor_name %}
+        <!-- Guarantor Info -->
+        <div class="section-card">
+            <h2 class="section-header"><i class="ph ph-shield-check"></i> بيانات الضامن</h2>
+            <div class="info-grid" style="grid-template-columns: 1fr;">
+                <div class="info-item">
+                    <div class="label">الاسم</div>
+                    <div class="value">{{ sale.guarantor_name }}</div>
+                </div>
+                {% if sale.guarantor_phone %}
+                <div class="info-item">
+                    <div class="label">الهاتف</div>
+                    <div class="value">{{ sale.guarantor_phone }}</div>
+                </div>
+                {% endif %}
+                {% if sale.guarantor_id_number %}
+                <div class="info-item">
+                    <div class="label">الرقم القومي</div>
+                    <div class="value">{{ sale.guarantor_id_number }}</div>
+                </div>
+                {% endif %}
+                {% if sale.guarantor_address %}
+                <div class="info-item">
+                    <div class="label">العنوان</div>
+                    <div class="value">{{ sale.guarantor_address }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if sale.note %}
+        <div class="section-card">
+            <h2 class="section-header"><i class="ph ph-note-pencil"></i> ملاحظات</h2>
+            <p style="color: #475569; line-height: 1.8;">{{ sale.note }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Edit Section -->
+        <div class="section-card">
+            <h2 class="section-header"><i class="ph ph-pencil-simple"></i> تعديل البيانات</h2>
+            <form class="edit-form" method="post" action="{% url 'installment_sale_update' sale.id %}">
+                {% csrf_token %}
+
+                <div class="form-section-title"><i class="ph ph-user"></i> العميل</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم العميل</label>
+                        <input type="text" name="customer_name" value="{{ sale.customer_name }}">
+                    </div>
+                    <div class="form-group">
+                        <label>الهاتف</label>
+                        <input type="text" name="customer_phone" value="{{ sale.customer_phone }}">
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم القومي</label>
+                        <input type="text" name="customer_id_number" value="{{ sale.customer_id_number }}">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>العنوان</label>
+                        <textarea name="customer_address">{{ sale.customer_address }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-section-title"><i class="ph ph-shield-check"></i> الضامن</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم الضامن</label>
+                        <input type="text" name="guarantor_name" value="{{ sale.guarantor_name }}">
+                    </div>
+                    <div class="form-group">
+                        <label>الهاتف</label>
+                        <input type="text" name="guarantor_phone" value="{{ sale.guarantor_phone }}">
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم القومي</label>
+                        <input type="text" name="guarantor_id_number" value="{{ sale.guarantor_id_number }}">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>العنوان</label>
+                        <textarea name="guarantor_address">{{ sale.guarantor_address }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-section-title"><i class="ph ph-note-pencil"></i> ملاحظات</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <textarea name="note" rows="2">{{ sale.note }}</textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="ph ph-floppy-disk"></i> حفظ التعديلات
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const csrfToken = '{{ csrf_token }}';
+
+    async function togglePaid(installmentId, checkbox) {
+        checkbox.disabled = true;
+
+        try {
+            const response = await fetch("{% url 'installment_toggle_paid' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ installment_id: installmentId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update row styling
+                const row = document.getElementById('inst-row-' + installmentId);
+                if (data.is_paid) {
+                    row.classList.add('is-paid');
+                } else {
+                    row.classList.remove('is-paid');
+                }
+
+                // Update status badge
+                const statusEl = document.getElementById('status-' + installmentId);
+                if (data.is_paid) {
+                    statusEl.className = 'paid-status paid';
+                    statusEl.innerHTML = '<i class="ph ph-check-circle"></i> تم السداد';
+                } else {
+                    statusEl.className = 'paid-status unpaid';
+                    statusEl.innerHTML = '<i class="ph ph-clock"></i> لم يسدد';
+                }
+
+                // Update paid_at
+                const paidAtEl = document.getElementById('paid-at-' + installmentId);
+                paidAtEl.textContent = data.paid_at || '—';
+
+                // Update summary cards
+                document.getElementById('sc-total-paid').textContent = data.total_paid + ' ج.م';
+                document.getElementById('sc-remaining').textContent = data.remaining_amount + ' ج.م';
+                document.getElementById('sc-collected-profit').textContent = data.collected_profit + ' ج.م';
+
+                // Show/hide completed banner
+                const banner = document.getElementById('completed-banner');
+                if (data.is_completed) {
+                    if (!banner) {
+                        const newBanner = document.createElement('div');
+                        newBanner.className = 'completed-banner';
+                        newBanner.id = 'completed-banner';
+                        newBanner.innerHTML = '<i class="ph ph-check-circle"></i> تم سداد جميع الأقساط بالكامل!';
+                        const content = document.getElementById('main-content');
+                        const firstChild = content.querySelector('.summary-cards');
+                        content.insertBefore(newBanner, firstChild);
+                    }
+                } else {
+                    if (banner) banner.remove();
+                }
+
+            } else {
+                alert('خطأ: ' + data.message);
+                checkbox.checked = !checkbox.checked;
+            }
+        } catch (err) {
+            console.error(err);
+            alert('حدث خطأ في الاتصال بالخادم.');
+            checkbox.checked = !checkbox.checked;
+        }
+
+        checkbox.disabled = false;
+    }
+</script>
+{% endblock %}

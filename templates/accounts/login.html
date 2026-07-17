@@ -1,0 +1,162 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block title %}تسجيل الدخول — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block body %}
+<main class="login-page">
+
+    <!-- Floating decorative dots -->
+    <div class="floating-dots">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+    </div>
+
+    <!-- Decorative shapes -->
+    <div class="login-decoration top-left"></div>
+    <div class="login-decoration bottom-right"></div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+        <div class="login-card-inner">
+
+            <!-- Logo & Branding -->
+            <div class="login-logo">
+                <img src="{% static 'images/logo.png' %}"
+                     alt="Al Captin MS Logo"
+                     class="login-logo-img"
+                     id="login-logo">
+                <h1>Al Captin <span>MS</span></h1>
+                <!-- Divider -->
+                <div class="login-divider">نظام إدارة المتجر</div>
+            </div>
+
+            <!-- Error Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" id="alert-message">
+                    <i class="ph ph-warning-circle"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if error %}
+            <div class="alert alert-error" id="alert-error">
+                <i class="ph ph-warning-circle"></i>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form method="POST" action="{% url 'login' %}" class="login-form" id="login-form" novalidate>
+                {% csrf_token %}
+
+                <!-- Username -->
+                <div class="form-group">
+                    <label class="form-label" for="username">اسم المستخدم</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-user form-icon"></i>
+                        <input type="text"
+                               class="form-control"
+                               id="username"
+                               name="username"
+                               placeholder="أدخل اسم المستخدم"
+                               autocomplete="username"
+                               required
+                               value="{{ request.POST.username }}">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label class="form-label" for="password">كلمة المرور</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-lock-simple form-icon"></i>
+                        <input type="password"
+                               class="form-control"
+                               id="password"
+                               name="password"
+                               placeholder="أدخل كلمة المرور"
+                               autocomplete="current-password"
+                               required>
+                        <button type="button"
+                                class="password-toggle"
+                                id="password-toggle"
+                                aria-label="إظهار/إخفاء كلمة المرور"
+                                tabindex="-1">
+                            <i class="ph ph-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn btn-primary btn-block btn-lg login-btn" id="login-submit">
+                    <span class="btn-text">تسجيل الدخول</span>
+                    <div class="btn-spinner"></div>
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p>
+                    <i class="ph ph-storefront"></i>
+                    نظام إدارة الكابتن لأغطية وإكسسوارات الموبايل — مصر
+                </p>
+                <p class="copyright">
+                    &copy; {{ current_year|default:"2026" }} Al Captin MS — جميع الحقوق محفوظة
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    /* --- Password Visibility Toggle --- */
+    const toggle = document.getElementById('password-toggle');
+    const passInput = document.getElementById('password');
+
+    if (toggle && passInput) {
+        toggle.addEventListener('click', function () {
+            const isPassword = passInput.type === 'password';
+            passInput.type = isPassword ? 'text' : 'password';
+            const icon = toggle.querySelector('i');
+            icon.className = isPassword ? 'ph ph-eye-slash' : 'ph ph-eye';
+        });
+    }
+
+    /* --- Submit Loading State --- */
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('login-submit');
+
+    if (form && submitBtn) {
+        form.addEventListener('submit', function () {
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+        });
+    }
+
+    /* --- Auto-dismiss alerts --- */
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function (alert) {
+        setTimeout(function () {
+            alert.style.transition = 'opacity .4s ease, transform .4s ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-10px)';
+            setTimeout(function () { alert.remove(); }, 400);
+        }, 5000);
+    });
+})();
+</script>
+{% endblock %}

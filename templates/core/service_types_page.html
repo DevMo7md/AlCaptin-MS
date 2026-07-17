@@ -1,0 +1,487 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}إدارة أنواع الخدمات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Service Types Page Styles
+       ========================================== */
+
+    /* --- Back Link --- */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--color-gray-500);
+        margin-bottom: 1.25rem;
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+
+    .back-link:hover {
+        color: var(--color-orange-500);
+    }
+
+    /* --- Page Layout --- */
+    .types-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .types-layout {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    /* --- Add Type Card --- */
+    .add-type-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+    }
+
+    .add-type-card h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .add-type-card h2 i {
+        color: var(--color-orange-500);
+    }
+
+    .add-type-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .add-type-form .form-row {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .add-type-form .form-group {
+        flex: 1;
+        margin-bottom: 0;
+        min-width: 120px;
+    }
+
+    .add-type-form .form-label {
+        color: var(--color-navy-800);
+    }
+
+    .add-type-form .form-control {
+        padding-right: 1rem;
+    }
+
+    /* --- Types List Card --- */
+    .type-list-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .type-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .type-list-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .type-list-header h2 i {
+        color: var(--color-orange-500);
+    }
+
+    .type-count-badge {
+        background: rgba(232,119,46,.1);
+        color: var(--color-orange-500);
+        font-weight: 700;
+        font-size: 0.78rem;
+        padding: 0.2rem 0.65rem;
+        border-radius: 50px;
+    }
+
+    /* --- Type Row --- */
+    .type-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+        transition: background var(--transition-fast);
+    }
+
+    .type-row:last-child {
+        border-bottom: none;
+    }
+
+    .type-row:hover {
+        background: var(--color-gray-50);
+    }
+
+    .type-row-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .type-row-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-sm);
+        background: rgba(59,130,246,.08);
+        color: #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .type-row-name {
+        font-weight: 600;
+        color: var(--color-navy-800);
+        font-size: 0.95rem;
+    }
+
+    .type-row-meta {
+        font-size: 0.78rem;
+        color: var(--color-gray-500);
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .type-row-meta .commission-badge {
+        background: rgba(22,163,74,.08);
+        color: #16a34a;
+        padding: 0.15rem 0.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .type-row-actions {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .type-action-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all var(--transition-fast);
+    }
+
+    .type-action-btn.edit {
+        background: rgba(232,119,46,.08);
+        color: var(--color-orange-500);
+    }
+
+    .type-action-btn.edit:hover {
+        background: var(--color-orange-500);
+        color: white;
+    }
+
+    .type-action-btn.delete {
+        background: rgba(239,68,68,.08);
+        color: var(--color-red-500);
+    }
+
+    .type-action-btn.delete:hover {
+        background: var(--color-red-500);
+        color: white;
+    }
+
+    /* --- Empty State --- */
+    .type-empty {
+        text-align: center;
+        padding: 2.5rem 1.5rem;
+        color: var(--color-gray-400);
+    }
+
+    .type-empty i {
+        font-size: 2.5rem;
+        color: var(--color-gray-300);
+        margin-bottom: 0.75rem;
+    }
+
+    .type-empty h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-navy-800);
+        margin-bottom: 0.35rem;
+    }
+
+    /* --- Edit Modal Inner --- */
+    .edit-type-modal .modal {
+        max-width: 480px;
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-folders"></i>
+        إدارة أنواع الخدمات
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'services_page' %}" class="back-link" id="btn-back-services">
+    <i class="ph ph-arrow-right"></i> العودة للخدمات
+</a>
+
+<div class="types-layout">
+    <!-- ==========================================
+         Add New Service Type
+         ========================================== -->
+    <div class="add-type-card">
+        <h2><i class="ph ph-plus-circle"></i> إضافة نوع خدمة جديد</h2>
+        <form method="POST" action="{% url 'service_type_add' %}" class="add-type-form" id="add-type-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">اسم الخدمة</label>
+                <input type="text" name="name" class="form-control" required
+                       placeholder="مثال: تحويل أموال، شحن رصيد...">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">نوع العمولة</label>
+                    <select name="commission_type" class="form-control" required>
+                        <option value="percentage">نسبة %</option>
+                        <option value="fixed">مبلغ ثابت</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">قيمة العمولة</label>
+                    <input type="number" name="commission_value" class="form-control" step="0.01" min="0" required
+                           placeholder="القيمة...">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="height: fit-content;">
+                    <i class="ph ph-plus"></i> إضافة
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ==========================================
+         Service Types List
+         ========================================== -->
+    <div class="type-list-card">
+        <div class="type-list-header">
+            <h2><i class="ph ph-list-dashes"></i> أنواع الخدمات</h2>
+            <span class="type-count-badge">{{ service_types|length }} نوع</span>
+        </div>
+
+        {% for stype in service_types %}
+        <div class="type-row" id="type-row-{{ stype.id }}">
+            <div class="type-row-info">
+                <div class="type-row-icon">
+                    <i class="ph ph-swap"></i>
+                </div>
+                <div>
+                    <div class="type-row-name">{{ stype.name }}</div>
+                    <div class="type-row-meta">
+                        <span class="commission-badge">
+                            {% if stype.commission_type == 'percentage' %}
+                                {{ stype.commission_value }}%
+                            {% else %}
+                                {{ stype.commission_value }} ج.م
+                            {% endif %}
+                        </span>
+                        <span>{{ stype.txn_count }} معاملة</span>
+                    </div>
+                </div>
+            </div>
+            <div class="type-row-actions">
+                <button class="type-action-btn edit"
+                        onclick="openEditTypeModal({{ stype.id }}, '{{ stype.name }}', '{{ stype.commission_type }}', '{{ stype.commission_value }}')"
+                        title="تعديل">
+                    <i class="ph ph-pencil-simple"></i>
+                </button>
+                <button class="type-action-btn delete"
+                        onclick="openDeleteTypeModal({{ stype.id }}, '{{ stype.name }}')"
+                        title="حذف">
+                    <i class="ph ph-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="type-empty">
+            <i class="ph ph-folders"></i>
+            <h3>لا توجد أنواع خدمات</h3>
+            <p>ابدأ بإضافة أنواع الخدمات لتنظيم معاملاتك.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ==========================================
+     Edit Service Type Modal
+     ========================================== -->
+<div class="modal-overlay edit-type-modal" id="edit-type-modal">
+    <div class="modal" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-pencil-simple" style="color: var(--color-orange-500);"></i>
+                تعديل نوع الخدمة
+            </h3>
+            <button class="modal-close" onclick="closeEditTypeModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'service_type_edit' %}" id="edit-type-form">
+            {% csrf_token %}
+            <input type="hidden" name="type_id" id="edit-type-id">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">اسم الخدمة</label>
+                    <input type="text" name="name" id="edit-type-name" class="form-control" required
+                           style="padding-right: 1rem;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">نوع العمولة</label>
+                    <select name="commission_type" id="edit-type-commission-type" class="form-control" required
+                            style="padding-right: 1rem;">
+                        <option value="percentage">نسبة %</option>
+                        <option value="fixed">مبلغ ثابت</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--color-navy-800);">قيمة العمولة</label>
+                    <input type="number" name="commission_value" id="edit-type-commission-value"
+                           class="form-control" step="0.01" min="0" required
+                           style="padding-right: 1rem;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ph ph-check"></i> حفظ التعديل
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditTypeModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================
+     Delete Service Type Modal
+     ========================================== -->
+<div class="modal-overlay" id="delete-type-modal">
+    <div class="modal" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-warning" style="color: var(--color-red-500);"></i>
+                تأكيد حذف نوع الخدمة
+            </h3>
+            <button class="modal-close" onclick="closeDeleteTypeModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'service_type_delete' %}" id="delete-type-form">
+            {% csrf_token %}
+            <input type="hidden" name="type_id" id="delete-type-id">
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 1rem; margin-bottom: 0.5rem;">هل أنت متأكد من حذف نوع الخدمة "<span id="delete-type-name-display" style="font-weight:700;"></span>"؟</p>
+                <p style="font-size: 0.85rem; color: var(--color-gray-500);">لن يتم الحذف إذا كانت هناك معاملات مرتبطة بنوع الخدمة.</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="ph ph-trash"></i> حذف
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeDeleteTypeModal()" style="border: 2px solid var(--color-gray-200);">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // ==========================================
+    // Edit Service Type Modal
+    // ==========================================
+    window.openEditTypeModal = function(id, name, commissionType, commissionValue) {
+        document.getElementById('edit-type-id').value = id;
+        document.getElementById('edit-type-name').value = name;
+        document.getElementById('edit-type-commission-type').value = commissionType;
+        document.getElementById('edit-type-commission-value').value = commissionValue;
+        document.getElementById('edit-type-modal').classList.add('open');
+        document.getElementById('edit-type-name').focus();
+    };
+
+    window.closeEditTypeModal = function() {
+        document.getElementById('edit-type-modal').classList.remove('open');
+    };
+
+    document.getElementById('edit-type-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditTypeModal();
+    });
+
+    // ==========================================
+    // Delete Service Type Modal
+    // ==========================================
+    window.openDeleteTypeModal = function(id, name) {
+        document.getElementById('delete-type-id').value = id;
+        document.getElementById('delete-type-name-display').textContent = name;
+        document.getElementById('delete-type-modal').classList.add('open');
+    };
+
+    window.closeDeleteTypeModal = function() {
+        document.getElementById('delete-type-modal').classList.remove('open');
+    };
+
+    document.getElementById('delete-type-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteTypeModal();
+    });
+
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Al Captin MS — نظام إدارة متجر أغطية وإكسسوارات الموبايل">
+    <meta name="theme-color" content="#0f172a">
+
+    <title>{% block title %}Al Captin MS{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+
+    <!-- Google Fonts — Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+
+    <!-- Base Styles -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <!-- Dashboard Layout -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- ===== Top Navigation Bar ===== -->
+    <header class="topbar" id="topbar">
+        <div class="topbar-inner">
+
+            <!-- Logo -->
+            <a href="{% url 'products_list' %}" class="topbar-brand" id="topbar-brand">
+                <img src="{% static 'images/logo.png' %}" alt="Al Captin MS" class="topbar-logo-img">
+                <span class="topbar-logo-text">Al Captin <em>MS</em></span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="topbar-nav" id="topbar-nav">
+                <a href="{% url 'dashboard_home' %}" class="nav-link {% if active_nav == 'home' %}active{% endif %}" id="nav-home">
+                    <i class="ph ph-house"></i>
+                    الرئيسية
+                </a>
+                <a href="{% url 'products_list' %}" class="nav-link {% if active_nav == 'inventory' %}active{% endif %}" id="nav-inventory">
+                    <i class="ph ph-package"></i>
+                    المنتجات
+                </a>
+                <a href="{% url 'purchases_page' %}" class="nav-link {% if active_nav == 'purchases' %}active{% endif %}" id="nav-purchases">
+                    <i class="ph ph-truck"></i>
+                    المشتريات
+                </a>
+                <a href="{% url 'sales_page' %}" class="nav-link {% if active_nav == 'sales' %}active{% endif %}" id="nav-sales">
+                    <i class="ph ph-shopping-cart"></i>
+                    المبيعات
+                </a>
+                <a href="{% url 'installment_sales_page' %}" class="nav-link {% if active_nav == 'installments' %}active{% endif %}" id="nav-installments">
+                    <i class="ph ph-calendar-check"></i>
+                    التقسيط
+                </a>
+                <a href="{% url 'services_page' %}" class="nav-link {% if active_nav == 'services' %}active{% endif %}" id="nav-services">
+                    <i class="ph ph-swap"></i>
+                    الخدمات
+                </a>
+                <a href="{% url 'expenses_page' %}" class="nav-link {% if active_nav == 'expenses' %}active{% endif %}" id="nav-expenses">
+                    <i class="ph ph-currency-dollar"></i>
+                    المصروفات
+                </a>
+                <a href="{% url 'reports_page' %}" class="nav-link {% if active_nav == 'reports' %}active{% endif %}" id="nav-reports">
+                    <i class="ph ph-chart-bar"></i>
+                    التقارير
+                </a>
+                <a href="{% url 'settings_page' %}" class="nav-link {% if active_nav == 'settings' %}active{% endif %}" id="nav-settings">
+                    <i class="ph ph-gear"></i>
+                    الإعدادات
+                </a>
+            </nav>
+
+            <!-- User Menu -->
+            <div class="topbar-user" id="topbar-user">
+                <div class="user-avatar">
+                    <i class="ph ph-user"></i>
+                </div>
+                <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+                <i class="ph ph-caret-down user-caret"></i>
+
+                <!-- Dropdown -->
+                <div class="user-dropdown" id="user-dropdown">
+                    <a href="#" class="dropdown-item">
+                        <i class="ph ph-user-circle"></i>
+                        الملف الشخصي
+                    </a>
+                    <a href="{% url 'logout' %}" class="dropdown-item">
+                        <i class="ph ph-sign-out"></i>
+                        تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button class="topbar-toggle" id="topbar-toggle" aria-label="فتح القائمة">
+                <i class="ph ph-list"></i>
+            </button>
+
+        </div>
+    </header>
+
+    <!-- ===== Main Content Area ===== -->
+    <main class="main-content" id="main-content">
+        <!-- Page Header -->
+        {% block page_header %}{% endblock %}
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" id="alert-{{ forloop.counter }}">
+                    <i class="ph ph-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}warning-circle{% else %}info{% endif %}"></i>
+                    {{ message }}
+                    <button class="alert-close" onclick="this.parentElement.remove()">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Page Body -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===== Scripts ===== -->
+    <script>
+    (function () {
+        'use strict';
+
+        /* --- User Dropdown Toggle --- */
+        const userBtn = document.getElementById('topbar-user');
+        const dropdown = document.getElementById('user-dropdown');
+
+        if (userBtn && dropdown) {
+            userBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+
+            document.addEventListener('click', function () {
+                dropdown.classList.remove('open');
+            });
+        }
+
+        /* --- Mobile Nav Toggle --- */
+        const toggleBtn = document.getElementById('topbar-toggle');
+        const nav = document.getElementById('topbar-nav');
+
+        if (toggleBtn && nav) {
+            toggleBtn.addEventListener('click', function () {
+                nav.classList.toggle('open');
+                const icon = toggleBtn.querySelector('i');
+                icon.className = nav.classList.contains('open') ? 'ph ph-x' : 'ph ph-list';
+            });
+        }
+
+        /* --- Auto-dismiss alerts --- */
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function (alert) {
+            setTimeout(function () {
+                alert.style.transition = 'opacity .4s ease, transform .4s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(function () { alert.remove(); }, 400);
+            }, 5000);
+        });
+    })();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

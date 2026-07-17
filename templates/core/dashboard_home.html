@@ -1,0 +1,684 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}الرئيسية — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       Dashboard Home Page Styles
+       ========================================== */
+
+    /* --- Page Header --- */
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .dashboard-header h1 i {
+        color: var(--color-orange-500);
+        font-size: 1.8rem;
+    }
+
+    .dashboard-header .header-subtitle {
+        color: var(--color-gray-500);
+        font-size: 0.92rem;
+        margin-top: 0.3rem;
+    }
+
+    /* --- Main KPI Row --- */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+    }
+
+    .kpi-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    /* Card accent colors */
+    .kpi-card.kpi-income::before    { background: #16a34a; }
+    .kpi-card.kpi-outcome::before   { background: #dc2626; }
+    .kpi-card.kpi-profit::before    { background: var(--color-orange-500); }
+    .kpi-card.kpi-sales::before     { background: #3b82f6; }
+    .kpi-card.kpi-services::before  { background: #8b5cf6; }
+    .kpi-card.kpi-expenses::before  { background: #f59e0b; }
+    .kpi-card.kpi-purchases::before { background: #06b6d4; }
+    .kpi-card.kpi-inventory::before { background: #64748b; }
+    .kpi-card.kpi-installments::before { background: #10b981; }
+
+    .kpi-card-top {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+
+    .kpi-icon.icon-green   { background: rgba(22,163,74,.1);  color: #16a34a; }
+    .kpi-icon.icon-red     { background: rgba(220,38,38,.1);  color: #dc2626; }
+    .kpi-icon.icon-orange  { background: rgba(232,119,46,.1); color: var(--color-orange-500); }
+    .kpi-icon.icon-blue    { background: rgba(59,130,246,.1);  color: #3b82f6; }
+    .kpi-icon.icon-purple  { background: rgba(139,92,246,.1);  color: #8b5cf6; }
+    .kpi-icon.icon-amber   { background: rgba(245,158,11,.1); color: #f59e0b; }
+    .kpi-icon.icon-cyan    { background: rgba(6,182,212,.1);   color: #06b6d4; }
+    .kpi-icon.icon-gray    { background: rgba(100,116,139,.1); color: #64748b; }
+    .kpi-icon.icon-emerald { background: rgba(16,185,129,.1); color: #10b981; }
+
+    .kpi-info h3 {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--color-gray-500);
+        margin-bottom: 0.15rem;
+    }
+
+    .kpi-info p.kpi-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        line-height: 1.2;
+    }
+
+    .kpi-info p.kpi-value span.currency {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-gray-500);
+    }
+
+    .kpi-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .change-up {
+        background: rgba(22,163,74,.1);
+        color: #16a34a;
+    }
+
+    .change-down {
+        background: rgba(220,38,38,.1);
+        color: #dc2626;
+    }
+
+    .change-same {
+        background: rgba(100,116,139,.1);
+        color: #64748b;
+    }
+
+    .change-no-data {
+        background: rgba(100,116,139,.06);
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    /* For expenses/outcome: up is bad (red), down is good (green) */
+    .change-up-bad {
+        background: rgba(220,38,38,.1);
+        color: #dc2626;
+    }
+
+    .change-down-good {
+        background: rgba(22,163,74,.1);
+        color: #16a34a;
+    }
+
+    /* --- Sections --- */
+    .dashboard-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .section-title i {
+        color: var(--color-orange-500);
+    }
+
+    /* --- Inventory Stats Grid --- */
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .inv-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+        text-align: center;
+        transition: all var(--transition-base);
+    }
+
+    .inv-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .inv-card .inv-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--color-navy-800);
+        margin-bottom: 0.25rem;
+    }
+
+    .inv-card .inv-value.text-green { color: #16a34a; }
+    .inv-card .inv-value.text-amber { color: #f59e0b; }
+    .inv-card .inv-value.text-red   { color: #dc2626; }
+
+    .inv-card .inv-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--color-gray-500);
+    }
+
+    /* --- Quick Actions --- */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .quick-action-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all var(--transition-base);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .quick-action-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+        border-color: var(--color-orange-500);
+        color: inherit;
+    }
+
+    .quick-action-card .qa-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-sm);
+        background: rgba(232,119,46,.1);
+        color: var(--color-orange-500);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .quick-action-card .qa-text h4 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        margin-bottom: 0.1rem;
+    }
+
+    .quick-action-card .qa-text p {
+        font-size: 0.78rem;
+        color: var(--color-gray-500);
+    }
+
+    /* --- Low Stock Alert Table --- */
+    .low-stock-card {
+        background: var(--color-white);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .low-stock-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .low-stock-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-navy-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .low-stock-header h3 i {
+        color: #f59e0b;
+    }
+
+    .low-stock-header .badge-count {
+        background: rgba(245,158,11,.12);
+        color: #f59e0b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 50px;
+    }
+
+    .low-stock-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .low-stock-table th {
+        background: var(--color-gray-50);
+        padding: 0.75rem 1.25rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--color-gray-500);
+        text-transform: uppercase;
+        text-align: right;
+    }
+
+    .low-stock-table td {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.88rem;
+        color: var(--color-navy-800);
+        border-top: 1px solid var(--color-gray-100);
+    }
+
+    .low-stock-table tr:hover td {
+        background: var(--color-gray-50);
+    }
+
+    .stock-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .stock-badge.out-of-stock {
+        background: rgba(220,38,38,.1);
+        color: #dc2626;
+    }
+
+    .stock-badge.low-stock {
+        background: rgba(245,158,11,.1);
+        color: #f59e0b;
+    }
+
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+        color: var(--color-gray-400);
+        font-size: 0.92rem;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>
+        <i class="ph ph-chart-pie-slice"></i>
+        لوحة التحكم
+    </h1>
+    <p class="header-subtitle">ملخص الأداء المالي لهذا الشهر — {{ current_month }}</p>
+</div>
+
+<!-- ====== Main KPI Cards ====== -->
+<div class="kpi-grid">
+    <!-- Total Income -->
+    <div class="kpi-card kpi-income" id="kpi-income">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-green">
+                <i class="ph ph-arrow-circle-down"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>إجمالي الدخل</h3>
+                <p class="kpi-value">{{ stats.total_income_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.total_income_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up{% elif c.direction == 'down' %}change-down{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            مقارنة بالشهر الماضي
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Total Outcome -->
+    <div class="kpi-card kpi-outcome" id="kpi-outcome">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-red">
+                <i class="ph ph-arrow-circle-up"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>إجمالي المصروفات والمشتريات</h3>
+                <p class="kpi-value">{{ stats.total_outcome_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.total_outcome_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up-bad{% elif c.direction == 'down' %}change-down-good{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            مقارنة بالشهر الماضي
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Net Profit -->
+    <div class="kpi-card kpi-profit" id="kpi-profit">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-orange">
+                <i class="ph ph-wallet"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>صافي الربح</h3>
+                <p class="kpi-value">{{ stats.net_profit_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.net_profit_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up{% elif c.direction == 'down' %}change-down{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            مقارنة بالشهر الماضي
+        </span>
+        {% endwith %}
+    </div>
+</div>
+
+<!-- ====== Detailed KPIs ====== -->
+<div class="kpi-grid">
+    <!-- Sales Revenue -->
+    <div class="kpi-card kpi-sales" id="kpi-sales">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-blue">
+                <i class="ph ph-shopping-cart"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>إيرادات المبيعات</h3>
+                <p class="kpi-value">{{ stats.sales_revenue_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.sales_revenue_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up{% elif c.direction == 'down' %}change-down{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            — {{ stats.sales_count_this }} فاتورة
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Service Income -->
+    <div class="kpi-card kpi-services" id="kpi-services">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-purple">
+                <i class="ph ph-swap"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>أرباح الخدمات</h3>
+                <p class="kpi-value">{{ stats.service_income_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.service_income_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up{% elif c.direction == 'down' %}change-down{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            مقارنة بالشهر الماضي
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Installment Collected -->
+    <div class="kpi-card kpi-installments" id="kpi-installments">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-emerald">
+                <i class="ph ph-calendar-check"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>محصلات التقسيط</h3>
+                <p class="kpi-value">{{ stats.installment_collected_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.installment_collected_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up{% elif c.direction == 'down' %}change-down{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            — أرباح محصلة: {{ stats.installment_profit_this|floatformat:2 }} ج.م
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Expenses -->
+    <div class="kpi-card kpi-expenses" id="kpi-expenses">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-amber">
+                <i class="ph ph-currency-dollar"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>المصروفات</h3>
+                <p class="kpi-value">{{ stats.expenses_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.expenses_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up-bad{% elif c.direction == 'down' %}change-down-good{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            مقارنة بالشهر الماضي
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Purchases -->
+    <div class="kpi-card kpi-purchases" id="kpi-purchases">
+        <div class="kpi-card-top">
+            <div class="kpi-icon icon-cyan">
+                <i class="ph ph-truck"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>المشتريات</h3>
+                <p class="kpi-value">{{ stats.purchases_this|floatformat:2 }} <span class="currency">ج.م</span></p>
+            </div>
+        </div>
+        {% with c=stats.purchases_change %}
+        <span class="kpi-change {% if not c.has_previous %}change-no-data{% elif c.direction == 'up' %}change-up-bad{% elif c.direction == 'down' %}change-down-good{% else %}change-same{% endif %}">
+            {% if c.direction == 'up' %}<i class="ph ph-trend-up"></i> +{{ c.percent }}%
+            {% elif c.direction == 'down' %}<i class="ph ph-trend-down"></i> -{{ c.percent }}%
+            {% elif not c.has_previous %}لا توجد بيانات سابقة
+            {% else %}<i class="ph ph-minus"></i> بدون تغيير{% endif %}
+            مقارنة بالشهر الماضي
+        </span>
+        {% endwith %}
+    </div>
+</div>
+
+<!-- ====== Inventory Overview ====== -->
+<div class="dashboard-section">
+    <h2 class="section-title">
+        <i class="ph ph-package"></i>
+        ملخص المخزون
+    </h2>
+    <div class="inventory-grid">
+        <div class="inv-card" id="inv-total">
+            <div class="inv-value">{{ stats.total_products }}</div>
+            <div class="inv-label">إجمالي المنتجات</div>
+        </div>
+        <div class="inv-card" id="inv-value">
+            <div class="inv-value">{{ stats.inventory_value|floatformat:2 }} ج.م</div>
+            <div class="inv-label">قيمة المخزون</div>
+        </div>
+        <div class="inv-card" id="inv-low">
+            <div class="inv-value text-amber">{{ stats.low_stock_products }}</div>
+            <div class="inv-label">مخزون منخفض</div>
+        </div>
+        <div class="inv-card" id="inv-out">
+            <div class="inv-value text-red">{{ stats.out_of_stock }}</div>
+            <div class="inv-label">نفد المخزون</div>
+        </div>
+    </div>
+</div>
+
+<!-- ====== Low Stock Alerts ====== -->
+{% if low_stock_list %}
+<div class="dashboard-section">
+    <div class="low-stock-card" id="low-stock-card">
+        <div class="low-stock-header">
+            <h3>
+                <i class="ph ph-warning"></i>
+                تنبيهات المخزون المنخفض
+            </h3>
+            <span class="badge-count">{{ low_stock_list|length }} منتج</span>
+        </div>
+        <table class="low-stock-table">
+            <thead>
+                <tr>
+                    <th>المنتج</th>
+                    <th>التصنيف</th>
+                    <th>المخزون</th>
+                    <th>الحد الأدنى</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in low_stock_list %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.category.name|default:"—" }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>{{ product.low_stock_alert }}</td>
+                    <td>
+                        {% if product.stock == 0 %}
+                            <span class="stock-badge out-of-stock">
+                                <i class="ph ph-x-circle"></i>&nbsp; نفد
+                            </span>
+                        {% else %}
+                            <span class="stock-badge low-stock">
+                                <i class="ph ph-warning"></i>&nbsp; منخفض
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ====== Quick Actions ====== -->
+<div class="dashboard-section">
+    <h2 class="section-title">
+        <i class="ph ph-lightning"></i>
+        إجراءات سريعة
+    </h2>
+    <div class="quick-actions">
+        <a href="{% url 'sales_page' %}" class="quick-action-card" id="qa-new-sale">
+            <div class="qa-icon"><i class="ph ph-shopping-cart"></i></div>
+            <div class="qa-text">
+                <h4>فاتورة بيع جديدة</h4>
+                <p>إنشاء فاتورة مبيعات</p>
+            </div>
+        </a>
+        <a href="{% url 'purchases_page' %}" class="quick-action-card" id="qa-new-purchase">
+            <div class="qa-icon"><i class="ph ph-truck"></i></div>
+            <div class="qa-text">
+                <h4>فاتورة شراء جديدة</h4>
+                <p>إضافة مشتريات جديدة</p>
+            </div>
+        </a>
+        <a href="{% url 'products_list' %}" class="quick-action-card" id="qa-products">
+            <div class="qa-icon"><i class="ph ph-package"></i></div>
+            <div class="qa-text">
+                <h4>إدارة المنتجات</h4>
+                <p>عرض وتعديل المنتجات</p>
+            </div>
+        </a>
+        <a href="{% url 'reports_page' %}" class="quick-action-card" id="qa-reports">
+            <div class="qa-icon"><i class="ph ph-chart-bar"></i></div>
+            <div class="qa-text">
+                <h4>التقارير المالية</h4>
+                <p>تقارير مفصلة بالتاريخ</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

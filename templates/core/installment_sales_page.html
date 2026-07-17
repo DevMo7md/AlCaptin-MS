@@ -1,0 +1,579 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}البيع بالتقسيط — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+    /* Tom Select overrides */
+    .ts-control {
+        border: 1px solid var(--color-gray-300);
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+    .ts-wrapper.single .ts-control, .ts-wrapper.single .ts-control input {
+        cursor: text;
+    }
+
+    /* Stats Cards */
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Section Card */
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .section-header {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+    .form-grid .form-group {
+        margin-bottom: 0;
+    }
+    .form-grid label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.35rem;
+    }
+    .form-grid input, .form-grid select, .form-grid textarea {
+        width: 100%;
+        padding: 0.65rem 0.85rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        color: #1e293b;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: white;
+    }
+    .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
+        outline: none;
+        border-color: var(--color-orange-500);
+        box-shadow: 0 0 0 3px rgba(232,119,46,.12);
+    }
+    .form-grid textarea {
+        resize: vertical;
+        min-height: 60px;
+    }
+
+    /* Form section title */
+    .form-section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-orange-500);
+        margin: 1.25rem 0 0.75rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 2px solid rgba(232,119,46,.15);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .form-section-title:first-child {
+        margin-top: 0;
+    }
+
+    /* Preview Box */
+    .preview-box {
+        background: #f8fafc;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-top: 1rem;
+    }
+    .preview-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        font-size: 0.95rem;
+        color: #475569;
+    }
+    .preview-row span:last-child {
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .preview-row.highlight {
+        color: #15803d;
+        font-weight: 600;
+    }
+    .preview-row.highlight span:last-child {
+        color: #15803d;
+    }
+
+    /* Submit Button */
+    .btn-submit-installment {
+        background: linear-gradient(135deg, var(--color-orange-500), var(--color-orange-600));
+        color: white;
+        border: none;
+        padding: 0.85rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(232,119,46,.3);
+    }
+    .btn-submit-installment:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(232,119,46,.4);
+    }
+    .btn-submit-installment:disabled {
+        background: #9ca3af;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Sales Table */
+    .sales-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .sales-table th, .sales-table td {
+        padding: 0.85rem 1rem;
+        text-align: right;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .sales-table th {
+        background: #1e293b;
+        color: white;
+        font-weight: 600;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+    .sales-table th:first-child { border-radius: 0 8px 8px 0; }
+    .sales-table th:last-child { border-radius: 8px 0 0 8px; }
+    .sales-table tbody tr:hover { background: #f8fafc; }
+    .sales-table td { white-space: nowrap; }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-badge.active {
+        background: rgba(245,158,11,.1);
+        color: #d97706;
+    }
+    .status-badge.completed {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+
+    /* View button */
+    .btn-detail {
+        background: rgba(59,130,246,.08);
+        color: #3b82f6;
+        padding: 0.3rem 0.75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: all 0.2s;
+    }
+    .btn-detail:hover {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .empty-state-table {
+        text-align: center;
+        padding: 2.5rem;
+        color: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-calendar-check"></i>
+        البيع بالتقسيط
+    </h1>
+    <div class="page-actions">
+        <a href="{% url 'sales_page' %}" class="btn btn-secondary btn-sm">
+            <i class="ph ph-arrow-right"></i> العودة للمبيعات
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="dashboard-cards">
+    <div class="stat-card orange">
+        <div class="stat-icon orange"><i class="ph ph-money"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">إجمالي قيمة التقسيط</div>
+            <div class="stat-value">{{ total_sales_value }} ج.م</div>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="ph ph-coins"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">المحصّل</div>
+            <div class="stat-value">{{ total_collected|floatformat:2 }} ج.م</div>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="ph ph-trend-up"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">الربح المحصّل</div>
+            <div class="stat-value">{{ total_profit_collected|floatformat:2 }} ج.م</div>
+        </div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon orange"><i class="ph ph-hourglass-medium"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">عمليات نشطة</div>
+            <div class="stat-value">{{ active_count }}</div>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="ph ph-check-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">عمليات مكتملة</div>
+            <div class="stat-value">{{ completed_count }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Create New Installment Sale -->
+<div class="section-card">
+    <h2 class="section-header"><i class="ph ph-plus-circle"></i> تسجيل بيع بالتقسيط جديد</h2>
+
+    <!-- Product & Financial Info -->
+    <div class="form-section-title"><i class="ph ph-package"></i> بيانات المنتج والسعر</div>
+    <div class="form-grid">
+        <div class="form-group" style="flex: 2; min-width: 280px;">
+            <label for="inst-product-select">المنتج</label>
+            <select id="inst-product-select">
+                <option value="">-- ابحث أو اختر منتج --</option>
+                {% for p in products %}
+                <option value="{{ p.id }}" data-price="{{ p.sell_price }}" data-stock="{{ p.stock }}" data-name="{{ p.name }}" data-barcode="{{ p.barcode }}">
+                    {{ p.name }} (السعر: {{ p.sell_price }} ج.م | المخزون: {{ p.stock }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="flex: 1; min-width: 180px;">
+            <label for="inst-barcode-input">باركود</label>
+            <input type="text" id="inst-barcode-input" placeholder="مسح الباركود...">
+        </div>
+        <div class="form-group">
+            <label for="inst-quantity">الكمية</label>
+            <input type="number" id="inst-quantity" value="1" min="1">
+        </div>
+        <div class="form-group">
+            <label for="inst-sale-price">سعر البيع بالتقسيط (الإجمالي)</label>
+            <input type="number" id="inst-sale-price" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="form-group">
+            <label for="inst-down-payment">المقدم</label>
+            <input type="number" id="inst-down-payment" step="0.01" min="0" value="0" placeholder="0.00">
+        </div>
+        <div class="form-group">
+            <label for="inst-num-installments">عدد الأقساط</label>
+            <input type="number" id="inst-num-installments" min="1" value="3">
+        </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-box" id="preview-box">
+        <div class="preview-row">
+            <span>قيمة القسط الواحد:</span>
+            <span id="preview-installment-amount">0.00 ج.م</span>
+        </div>
+        <div class="preview-row">
+            <span>المبلغ المتبقي بعد المقدم:</span>
+            <span id="preview-remaining">0.00 ج.م</span>
+        </div>
+        <div class="preview-row highlight">
+            <span>الربح المتوقع:</span>
+            <span id="preview-profit">— (يُحسب عند التسجيل)</span>
+        </div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="form-section-title"><i class="ph ph-user"></i> بيانات العميل</div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="inst-customer-name">اسم العميل *</label>
+            <input type="text" id="inst-customer-name" placeholder="الاسم بالكامل" required>
+        </div>
+        <div class="form-group">
+            <label for="inst-customer-phone">رقم الهاتف *</label>
+            <input type="text" id="inst-customer-phone" placeholder="01xxxxxxxxx" required>
+        </div>
+        <div class="form-group">
+            <label for="inst-customer-id">الرقم القومي</label>
+            <input type="text" id="inst-customer-id" placeholder="الرقم القومي">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="inst-customer-address">العنوان</label>
+            <textarea id="inst-customer-address" placeholder="عنوان العميل"></textarea>
+        </div>
+    </div>
+
+    <!-- Guarantor Info -->
+    <div class="form-section-title"><i class="ph ph-shield-check"></i> بيانات الضامن</div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="inst-guarantor-name">اسم الضامن</label>
+            <input type="text" id="inst-guarantor-name" placeholder="الاسم بالكامل">
+        </div>
+        <div class="form-group">
+            <label for="inst-guarantor-phone">رقم هاتف الضامن</label>
+            <input type="text" id="inst-guarantor-phone" placeholder="01xxxxxxxxx">
+        </div>
+        <div class="form-group">
+            <label for="inst-guarantor-id">الرقم القومي للضامن</label>
+            <input type="text" id="inst-guarantor-id" placeholder="الرقم القومي">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="inst-guarantor-address">عنوان الضامن</label>
+            <textarea id="inst-guarantor-address" placeholder="عنوان الضامن"></textarea>
+        </div>
+    </div>
+
+    <!-- Note -->
+    <div class="form-section-title"><i class="ph ph-note-pencil"></i> ملاحظات</div>
+    <div class="form-grid">
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <textarea id="inst-note" placeholder="أي ملاحظات إضافية..." rows="2"></textarea>
+        </div>
+    </div>
+
+    <button class="btn-submit-installment" id="btn-submit-installment" onclick="submitInstallmentSale()">
+        <i class="ph ph-check-circle"></i> تسجيل البيع بالتقسيط
+    </button>
+</div>
+
+<!-- Recent Installment Sales -->
+<div class="section-card">
+    <h2 class="section-header"><i class="ph ph-list-checks"></i> عمليات البيع بالتقسيط</h2>
+    <div style="overflow-x: auto; border-radius: 8px;">
+        <table class="sales-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>المنتج</th>
+                    <th>العميل</th>
+                    <th>السعر الإجمالي</th>
+                    <th>المقدم</th>
+                    <th>الأقساط</th>
+                    <th>المدفوع</th>
+                    <th>المتبقي</th>
+                    <th>الحالة</th>
+                    <th>التاريخ</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td>{{ sale.id }}</td>
+                    <td>{{ sale.product.name }}</td>
+                    <td>{{ sale.customer_name }}</td>
+                    <td>{{ sale.installment_sale_price|floatformat:2 }} ج.م</td>
+                    <td>{{ sale.down_payment|floatformat:2 }} ج.م</td>
+                    <td>{{ sale.paid_count }}/{{ sale.number_of_installments|add:1 }}</td>
+                    <td style="color: #15803d; font-weight: 600;">{{ sale.total_paid|floatformat:2 }} ج.م</td>
+                    <td style="color: #b91c1c; font-weight: 600;">{{ sale.remaining_amount|floatformat:2 }} ج.م</td>
+                    <td>
+                        {% if sale.is_completed %}
+                            <span class="status-badge completed"><i class="ph ph-check-circle"></i> مكتمل</span>
+                        {% else %}
+                            <span class="status-badge active"><i class="ph ph-hourglass-medium"></i> نشط</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ sale.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                        <a href="{% url 'installment_sale_detail' sale.id %}" class="btn-detail">
+                            <i class="ph ph-eye"></i> عرض
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11" class="empty-state-table">لا توجد عمليات بيع بالتقسيط حتى الآن.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CSRF Token -->
+{% csrf_token %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // TomSelect for product dropdown
+    const tomSelectInst = new TomSelect("#inst-product-select", {
+        create: false,
+        sortField: { field: "text", direction: "asc" }
+    });
+
+    // Barcode input — select product by barcode on Enter
+    const barcodeInput = document.getElementById('inst-barcode-input');
+    const selectEl = document.getElementById('inst-product-select');
+
+    barcodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const code = barcodeInput.value.trim();
+            if (!code) return;
+
+            let found = false;
+            for (let i = 0; i < selectEl.options.length; i++) {
+                const opt = selectEl.options[i];
+                if (opt.dataset.barcode === code) {
+                    tomSelectInst.setValue(opt.value);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                alert('لم يتم العثور على منتج بهذا الباركود');
+            }
+            barcodeInput.value = '';
+        }
+    });
+
+    // Preview Calculation
+    const salePriceEl = document.getElementById('inst-sale-price');
+    const downPaymentEl = document.getElementById('inst-down-payment');
+    const numInstallmentsEl = document.getElementById('inst-num-installments');
+    const previewAmount = document.getElementById('preview-installment-amount');
+    const previewRemaining = document.getElementById('preview-remaining');
+
+    function updatePreview() {
+        const salePrice = parseFloat(salePriceEl.value) || 0;
+        const downPayment = parseFloat(downPaymentEl.value) || 0;
+        const numInst = parseInt(numInstallmentsEl.value) || 1;
+
+        const remaining = salePrice - downPayment;
+        const perInstallment = numInst > 0 ? remaining / numInst : 0;
+
+        previewRemaining.textContent = remaining.toFixed(2) + ' ج.م';
+        previewAmount.textContent = perInstallment.toFixed(2) + ' ج.م';
+    }
+
+    salePriceEl.addEventListener('input', updatePreview);
+    downPaymentEl.addEventListener('input', updatePreview);
+    numInstallmentsEl.addEventListener('input', updatePreview);
+    updatePreview();
+
+    // Submit
+    async function submitInstallmentSale() {
+        const submitBtn = document.getElementById('btn-submit-installment');
+        const productSelect = document.getElementById('inst-product-select');
+
+        const productId = productSelect.value;
+        if (!productId) { alert('يرجى اختيار منتج'); return; }
+
+        const quantity = parseInt(document.getElementById('inst-quantity').value) || 0;
+        if (quantity <= 0) { alert('الكمية يجب أن تكون أكبر من صفر'); return; }
+
+        const salePrice = parseFloat(salePriceEl.value) || 0;
+        if (salePrice <= 0) { alert('سعر البيع بالتقسيط مطلوب'); return; }
+
+        const downPayment = parseFloat(downPaymentEl.value) || 0;
+        const numInstallments = parseInt(numInstallmentsEl.value) || 0;
+        if (numInstallments <= 0) { alert('عدد الأقساط يجب أن يكون أكبر من صفر'); return; }
+
+        const customerName = document.getElementById('inst-customer-name').value.trim();
+        const customerPhone = document.getElementById('inst-customer-phone').value.trim();
+        if (!customerName) { alert('اسم العميل مطلوب'); return; }
+        if (!customerPhone) { alert('رقم هاتف العميل مطلوب'); return; }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph ph-spinner" style="animation: spin 1s linear infinite;"></i> جاري التسجيل...';
+
+        const payload = {
+            product_id: parseInt(productId),
+            quantity: quantity,
+            installment_sale_price: salePrice,
+            down_payment: downPayment,
+            number_of_installments: numInstallments,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_address: document.getElementById('inst-customer-address').value.trim(),
+            customer_id_number: document.getElementById('inst-customer-id').value.trim(),
+            guarantor_name: document.getElementById('inst-guarantor-name').value.trim(),
+            guarantor_phone: document.getElementById('inst-guarantor-phone').value.trim(),
+            guarantor_address: document.getElementById('inst-guarantor-address').value.trim(),
+            guarantor_id_number: document.getElementById('inst-guarantor-id').value.trim(),
+            note: document.getElementById('inst-note').value.trim(),
+        };
+
+        try {
+            const response = await fetch("{% url 'installment_sale_create' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = "{% url 'installment_sales_page' %}";
+            } else {
+                alert('خطأ: ' + data.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="ph ph-check-circle"></i> تسجيل البيع بالتقسيط';
+            }
+        } catch (err) {
+            console.error(err);
+            alert('حدث خطأ في الاتصال بالخادم.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="ph ph-check-circle"></i> تسجيل البيع بالتقسيط';
+        }
+    }
+</script>
+{% endblock %}

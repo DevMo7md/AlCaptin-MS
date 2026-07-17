@@ -1,0 +1,1041 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}المنتجات — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/products.css' %}">
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="ph ph-package"></i>
+        إدارة المنتجات
+    </h1>
+    <div class="page-actions" style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="openSupplierModal()">
+            <i class="ph ph-users"></i>
+            إضافة مورد
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="openCategoryModal()">
+            <i class="ph ph-squares-four"></i>
+            إضافة قسم
+        </button>
+        <button class="btn btn-primary btn-sm" id="btn-add-product" onclick="openAddModal()">
+            <i class="ph ph-plus"></i>
+            إضافة منتج
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats Overview -->
+<div class="stats-row">
+    <div class="stat-card orange">
+        <div class="stat-icon orange">
+            <i class="ph ph-package"></i>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">إجمالي المنتجات</div>
+            <div class="stat-value">{{ total_products }}</div>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue">
+            <i class="ph ph-stack"></i>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">إجمالي المخزون</div>
+            <div class="stat-value">{{ total_stock }} قطعة</div>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green">
+            <i class="ph ph-tag"></i>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">الأقسام</div>
+            <div class="stat-value">{{ total_categories }}</div>
+        </div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon red">
+            <i class="ph ph-warning"></i>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">مخزون منخفض</div>
+            <div class="stat-value">{{ low_stock_count }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Products Table Card -->
+<div class="card products-card">
+    <div class="card-header">
+        <h2 class="card-header-title">
+            <i class="ph ph-list-dashes"></i>
+            قائمة المنتجات
+        </h2>
+        <span class="products-count-badge">{{ total_products }} منتج</span>
+    </div>
+
+    <div class="card-body">
+        <!-- Toolbar: Search + Filters -->
+        <div class="toolbar">
+            <div class="toolbar-right">
+                <div class="search-box">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text"
+                           id="search-input"
+                           placeholder="بحث بالاسم أو الكود..."
+                           value="{{ search_query|default:'' }}"
+                           autocomplete="off">
+                </div>
+                <select class="filter-select" id="filter-category" onchange="applyFilters()">
+                    <option value="">كل الأقسام</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"d" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <select class="filter-select" id="filter-stock" onchange="applyFilters()">
+                    <option value="">حالة المخزون</option>
+                    <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>مخزون منخفض</option>
+                    <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>نفد المخزون</option>
+                    <option value="ok" {% if stock_filter == 'ok' %}selected{% endif %}>متوفر</option>
+                </select>
+            </div>
+            <div class="toolbar-left">
+                <button class="btn btn-secondary btn-sm btn-icon" onclick="applyFilters()" title="تطبيق الفلتر">
+                    <i class="ph ph-funnel"></i>
+                    فلترة
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        {% if products %}
+        <div class="table-wrapper">
+            <table class="data-table" id="products-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>اسم المنتج</th>
+                        <th>القسم</th>
+                        <th>متوسط الشراء</th>
+                        <th>سعر البيع</th>
+                        <th>الربح</th>
+                        <th>المخزون</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="product-row" data-id="{{ product.id }}">
+                        <td class="product-id">#ACM-{{ product.id }}</td>
+                        <td class="product-name-cell">
+                            <div class="product-name-wrap">
+                                <span class="product-name">{{ product.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if product.category %}
+                            <span class="badge badge-info">{{ product.category.name }}</span>
+                            {% else %}
+                            <span class="badge badge-warning">بدون قسم</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.avg_buy_price }} ج.م</td>
+                        <td class="fw-bold">{{ product.sell_price }} ج.م</td>
+                        <td class="profit-cell">
+                            <span class="profit-value {% if product.profit < 0 %}negative{% endif %}">
+                                {{ product.profit }} ج.م
+                            </span>
+                        </td>
+                        <td>
+                            <div class="stock-display">
+                                <div class="stock-bar-bg">
+                                    <div class="stock-bar"
+                                         data-stock="{{ product.stock }}"
+                                         data-max="{{ product.max_stock }}"
+                                         data-alert="{{ product.low_stock_alert }}">
+                                    </div>
+                                </div>
+                                <span class="stock-num">{{ product.stock }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if product.stock == 0 %}
+                                <span class="badge badge-danger">
+                                    <i class="ph ph-x-circle"></i>
+                                    نفد
+                                </span>
+                            {% elif product.is_low_stock %}
+                                <span class="badge badge-warning">
+                                    <i class="ph ph-warning"></i>
+                                    منخفض
+                                </span>
+                            {% else %}
+                                <span class="badge badge-success">
+                                    <i class="ph ph-check-circle"></i>
+                                    متوفر
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-btns">
+                                <a href="#" class="action-btn view" title="عرض" onclick="viewProduct({{ product.id }}); return false;">
+                                    <i class="ph ph-eye"></i>
+                                </a>
+                                <a href="#" class="action-btn edit" title="تعديل" onclick="editProduct({{ product.id }}); return false;">
+                                    <i class="ph ph-pencil-simple"></i>
+                                </a>
+                                <a href="#" class="action-btn sell" title="بيع" onclick="openSellModal({{ product.id }}); return false;" style="color: var(--color-orange-500);">
+                                    <i class="ph ph-shopping-cart"></i>
+                                </a>
+                                <a href="#" class="action-btn delete" title="حذف" onclick="confirmDelete({{ product.id }}, '{{ product.name|escapejs }}'); return false;">
+                                    <i class="ph ph-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="pagination" id="pagination">
+            {% if products.has_previous %}
+                <a href="?page={{ products.previous_page_number }}" class="page-link">
+                    <i class="ph ph-caret-right"></i>
+                </a>
+            {% else %}
+                <span class="page-link disabled">
+                    <i class="ph ph-caret-right"></i>
+                </span>
+            {% endif %}
+
+            {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                    <span class="page-link active">{{ num }}</span>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                    <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}" class="page-link">
+                    <i class="ph ph-caret-left"></i>
+                </a>
+            {% else %}
+                <span class="page-link disabled">
+                    <i class="ph ph-caret-left"></i>
+                </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+            <i class="ph ph-package"></i>
+            <h3>لا توجد منتجات بعد</h3>
+            <p>ابدأ بإضافة أول منتج للمتجر</p>
+            <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+                <i class="ph ph-plus"></i>
+                إضافة منتج جديد
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===== Add Product Modal (with first batch) ===== -->
+<div class="modal-overlay" id="add-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-plus-circle"></i>
+                إضافة منتج جديد
+            </h3>
+            <button class="modal-close" onclick="closeAddModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'product_add' %}" id="add-form">
+            {% csrf_token %}
+            <div class="modal-body">
+                <!-- Product info section -->
+                <div class="modal-section-title">
+                    <i class="ph ph-info"></i>
+                    بيانات المنتج
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="add-name">اسم المنتج</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-tag form-icon"></i>
+                            <input type="text" class="form-control" id="add-name" name="name"
+                                   placeholder="مثال: جراب سامسونج S23" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="add-barcode">الباركود</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-barcode form-icon"></i>
+                            <input type="text" class="form-control" id="add-barcode" name="barcode"
+                                   placeholder="مثال: 123456789" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="add-category">القسم</label>
+                        <div style="position: relative; display: flex; gap: 0.5rem;">
+                            <div style="flex: 1; position: relative;">
+                                <i class="ph ph-squares-four form-icon"></i>
+                                <select class="form-control form-select" id="add-category" name="category" required>
+                                    <option value="">اختر القسم</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="openCategoryModal()" style="padding: 0 1rem; border-radius: 8px;" title="إضافة قسم جديد">
+                                <i class="ph ph-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="add-sell-price">سعر البيع (ج.م)</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-currency-circle-dollar form-icon"></i>
+                            <input type="number" class="form-control" id="add-sell-price" name="sell_price"
+                                   placeholder="0.00" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                </div>
+
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add-low-stock">حد تنبيه المخزون المنخفض</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-warning form-icon"></i>
+                        <input type="number" class="form-control" id="add-low-stock" name="low_stock_alert"
+                               placeholder="5" min="0" value="5">
+                    </div>
+                </div>
+
+                <!-- Live Profit Preview -->
+                <div class="profit-preview" id="add-profit-preview">
+                    <div class="profit-preview-inner">
+                        <i class="ph ph-trend-up"></i>
+                        <span>الربح المتوقع لكل قطعة: <strong id="add-profit-display">0.00</strong> ج.م</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ph ph-floppy-disk"></i>
+                    حفظ المنتج
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddModal()">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== Edit Product Modal (product info only, no batch) ===== -->
+<div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-pencil-simple"></i>
+                تعديل المنتج
+            </h3>
+            <button class="modal-close" onclick="closeEditModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'product_edit' %}" id="edit-form">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" id="edit-product-id" value="">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-name">اسم المنتج</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-tag form-icon"></i>
+                            <input type="text" class="form-control" id="edit-name" name="name"
+                                   placeholder="اسم المنتج" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-barcode">الباركود</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-barcode form-icon"></i>
+                            <input type="text" class="form-control" id="edit-barcode" name="barcode"
+                                   placeholder="الباركود" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-category">القسم</label>
+                        <div style="position: relative; display: flex; gap: 0.5rem;">
+                            <div style="flex: 1; position: relative;">
+                                <i class="ph ph-squares-four form-icon"></i>
+                                <select class="form-control form-select" id="edit-category" name="category" required>
+                                    <option value="">اختر القسم</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="openCategoryModal()" style="padding: 0 1rem; border-radius: 8px;" title="إضافة قسم جديد">
+                                <i class="ph ph-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-sell-price">سعر البيع (ج.م)</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-currency-circle-dollar form-icon"></i>
+                            <input type="number" class="form-control" id="edit-sell-price" name="sell_price"
+                                   placeholder="0.00" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-low-stock">حد تنبيه المخزون المنخفض</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-warning form-icon"></i>
+                        <input type="number" class="form-control" id="edit-low-stock" name="low_stock_alert"
+                               placeholder="5" min="0">
+                    </div>
+                </div>
+
+                <!-- Info note about batches -->
+                <div class="batch-info-note">
+                    <i class="ph ph-info"></i>
+                    <span>سعر الشراء والمخزون يُدار من خلال <strong>دفعات الشراء</strong>. استخدم زر <strong>"إضافة مخزون"</strong> لإضافة كميات جديدة.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ph ph-floppy-disk"></i>
+                    تحديث المنتج
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditModal()">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<!-- ===== Sell Modal ===== -->
+<div class="modal-overlay" id="sell-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-shopping-cart" style="color: var(--color-orange-500);"></i>
+                بيع منتج
+            </h3>
+            <button class="modal-close" onclick="closeSellModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'product_sell' %}" id="sell-form">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" id="sell-product-id" value="">
+            <div class="modal-body">
+                <!-- Product Info Summary -->
+                <div class="batch-product-summary" id="sell-product-summary">
+                    <!-- Filled via JS -->
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sell-quantity">الكمية المباعة</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-stack form-icon"></i>
+                        <input type="number" class="form-control" id="sell-quantity" name="quantity"
+                               placeholder="0" min="1" required>
+                    </div>
+                </div>
+
+                <!-- Total Revenue Preview -->
+                <div class="profit-preview positive" id="sell-total-preview">
+                    <div class="profit-preview-inner">
+                        <i class="ph ph-money"></i>
+                        <span>إجمالي البيع: <strong id="sell-total-display">0.00</strong> ج.م</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm" style="background: var(--color-orange-500); border-color: var(--color-orange-500);">
+                    <i class="ph ph-check-circle"></i>
+                    تأكيد البيع
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeSellModal()">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== Delete Confirmation Modal ===== -->
+<div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-warning" style="color: var(--color-red-500);"></i>
+                تأكيد الحذف
+            </h3>
+            <button class="modal-close" onclick="closeDeleteModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'product_delete' %}" id="delete-form">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" id="delete-product-id" value="">
+            <div class="modal-body">
+                <div class="delete-confirm-content">
+                    <div class="delete-icon-wrap">
+                        <i class="ph ph-trash"></i>
+                    </div>
+                    <p>هل أنت متأكد من حذف المنتج:</p>
+                    <strong id="delete-product-name" class="delete-product-name"></strong>
+                    <p class="text-sm text-gray mt-1">سيتم إخفاء المنتج وجميع دفعاته من القوائم</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="ph ph-trash"></i>
+                    نعم، احذف
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeDeleteModal()">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== View Product Modal ===== -->
+<div class="modal-overlay" id="view-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-info"></i>
+                تفاصيل المنتج
+            </h3>
+            <button class="modal-close" onclick="closeViewModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="view-details" id="view-details">
+                <!-- Filled via JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeViewModal()">
+                إغلاق
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Add Category Modal ===== -->
+<div class="modal-overlay" id="category-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-squares-four"></i>
+                إضافة قسم جديد
+            </h3>
+            <button class="modal-close" onclick="closeCategoryModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'category_add' %}" id="category-form">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="add-category-name">اسم القسم</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-tag form-icon"></i>
+                        <input type="text" class="form-control" id="add-category-name" name="name"
+                               placeholder="مثال: إكسسوارات" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ph ph-plus-circle"></i>
+                    إضافة القسم
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeCategoryModal()">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== Add Supplier Modal ===== -->
+<div class="modal-overlay" id="supplier-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-users"></i>
+                إضافة مورد جديد
+            </h3>
+            <button class="modal-close" onclick="closeSupplierModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'supplier_add' %}" id="supplier-form">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="add-supplier-name">اسم المورد</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-user form-icon"></i>
+                        <input type="text" class="form-control" id="add-supplier-name" name="name"
+                               placeholder="مثال: شركة سامسونج" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ph ph-plus-circle"></i>
+                    إضافة المورد
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeSupplierModal()">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    /* ==============================
+       Product Data (embedded JSON)
+       ============================== */
+    const productsData = {
+        {% for product in all_products %}
+        {{ product.id }}: {
+            id: {{ product.id }},
+            name: "{{ product.name|escapejs }}",
+            barcode: "{{ product.barcode|escapejs }}",
+            category_id: {{ product.category.id|default:"null" }},
+            category_name: "{{ product.category.name|default:'بدون قسم'|escapejs }}",
+            avg_buy_price: "{{ product.avg_buy_price }}",
+            sell_price: "{{ product.sell_price }}",
+            stock: {{ product.stock }},
+            low_stock_alert: {{ product.low_stock_alert }},
+            created_at: "{{ product.created_at|date:'Y/m/d' }}",
+            batches: [
+                {% for b in product.batches_list %}
+                {
+                    id: {{ b.id }},
+                    quantity: {{ b.quantity }},
+                    remaining: {{ b.remaining_quantity }},
+                    buy_price: "{{ b.buy_price }}",
+                    date: "{{ b.created_at|date:'Y/m/d H:i' }}"
+                },
+                {% endfor %}
+            ]
+        },
+        {% endfor %}
+    };
+
+    /* ==============================
+       Utility: open / close modals
+       ============================== */
+    function openModal(id) {
+        document.getElementById(id).classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModalById(id) {
+        document.getElementById(id).classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize stock bars
+        const stockBars = document.querySelectorAll('.stock-bar');
+        stockBars.forEach(bar => {
+            const stock = parseInt(bar.dataset.stock) || 0;
+            // Use 100 as default max if max_stock is 0 or missing, to avoid division by zero
+            let max = parseInt(bar.dataset.max) || 100;
+            if (max <= 0) max = 100; 
+            
+            const alertLevel = parseInt(bar.dataset.alert) || 5;
+            
+            let percent = (stock / max) * 100;
+            if (percent > 100) percent = 100;
+            
+            bar.style.width = percent + '%';
+            
+            // Set background color directly based on stock level
+            if (stock === 0) {
+                bar.style.backgroundColor = 'var(--color-red-500)';
+            } else if (stock <= alertLevel) {
+                bar.style.backgroundColor = 'var(--color-orange-500)';
+            } else {
+                bar.style.backgroundColor = 'var(--color-green-500)';
+            }
+        });
+    });
+
+    /* ==============================
+       Category Modal
+       ============================== */
+    window.openCategoryModal = function () {
+        document.getElementById('category-form').reset();
+        const modals = document.querySelectorAll('.modal-overlay.open');
+        modals.forEach(m => m.classList.remove('open'));
+        openModal('category-modal');
+    };
+    window.closeCategoryModal = function () { closeModalById('category-modal'); };
+
+    /* ==============================
+       Supplier Modal
+       ============================== */
+    window.openSupplierModal = function () {
+        document.getElementById('supplier-form').reset();
+        const modals = document.querySelectorAll('.modal-overlay.open');
+        modals.forEach(m => m.classList.remove('open'));
+        openModal('supplier-modal');
+    };
+    window.closeSupplierModal = function () { closeModalById('supplier-modal'); };
+
+    /* ==============================
+       Add Product Modal
+       ============================== */
+    window.openAddModal = function () {
+        document.getElementById('add-form').reset();
+        document.getElementById('add-low-stock').value = '5';
+        openModal('add-modal');
+    };
+    window.closeAddModal = function () { closeModalById('add-modal'); };
+
+    /* ==============================
+       Edit Product Modal
+       ============================== */
+    window.editProduct = function (id) {
+        const p = productsData[id];
+        if (!p) return;
+
+        document.getElementById('edit-product-id').value = p.id;
+        document.getElementById('edit-name').value = p.name;
+        document.getElementById('edit-barcode').value = p.barcode;
+        document.getElementById('edit-category').value = p.category_id || '';
+        document.getElementById('edit-sell-price').value = p.sell_price;
+        document.getElementById('edit-low-stock').value = p.low_stock_alert;
+
+        openModal('edit-modal');
+    };
+    window.closeEditModal = function () { closeModalById('edit-modal'); };
+
+
+    /* ==============================
+       Sell Modal
+       ============================== */
+    window.openSellModal = function (id) {
+        const p = productsData[id];
+        if (!p) return;
+
+        document.getElementById('sell-product-id').value = p.id;
+        document.getElementById('sell-quantity').value = '';
+        document.getElementById('sell-quantity').max = p.stock;
+        document.getElementById('sell-total-display').textContent = '0.00';
+
+        // Product summary
+        document.getElementById('sell-product-summary').innerHTML = `
+            <div class="summary-row">
+                <span class="summary-label">المنتج</span>
+                <span class="summary-value fw-bold">${p.name}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">المخزون المتاح</span>
+                <span class="summary-value" style="color: var(--color-green-500);">${p.stock} قطعة</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">سعر البيع للقطعة</span>
+                <span class="summary-value">${p.sell_price} ج.م</span>
+            </div>
+        `;
+        
+        document.getElementById('sell-quantity').dataset.price = p.sell_price;
+        openModal('sell-modal');
+    };
+    window.closeSellModal = function () { closeModalById('sell-modal'); };
+
+    /* ==============================
+       Sell Total Preview
+       ============================== */
+    const sellQtyInput = document.getElementById('sell-quantity');
+    if(sellQtyInput) {
+        sellQtyInput.addEventListener('input', function() {
+            const price = parseFloat(this.dataset.price) || 0;
+            const qty = parseInt(this.value) || 0;
+            document.getElementById('sell-total-display').textContent = (price * qty).toFixed(2);
+        });
+    }
+
+    /* ==============================
+       View Product Modal
+       ============================== */
+    window.viewProduct = function (id) {
+        const p = productsData[id];
+        if (!p) return;
+
+        const profit = (parseFloat(p.sell_price) - parseFloat(p.avg_buy_price)).toFixed(2);
+        const stockStatus = p.stock === 0 ? 'نفد المخزون' :
+                            p.stock <= p.low_stock_alert ? 'مخزون منخفض' : 'متوفر';
+        const statusClass = p.stock === 0 ? 'danger' :
+                            p.stock <= p.low_stock_alert ? 'warning' : 'success';
+
+        let batchRows = '';
+        p.batches.forEach(function (b) {
+            batchRows += `
+                <tr>
+                    <td>#${b.id}</td>
+                    <td>${b.date}</td>
+                    <td>${b.quantity}</td>
+                    <td>${b.remaining}</td>
+                    <td>${b.buy_price} ج.م</td>
+                </tr>`;
+        });
+
+        document.getElementById('view-details').innerHTML = `
+            <div class="view-grid">
+                <div class="view-item">
+                    <span class="view-label">كود المنتج</span>
+                    <span class="view-value">#ACM-${p.id}</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">الباركود</span>
+                    <span class="view-value">${p.barcode ? p.barcode : '-'}</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">اسم المنتج</span>
+                    <span class="view-value fw-bold">${p.name}</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">القسم</span>
+                    <span class="view-value"><span class="badge badge-info">${p.category_name}</span></span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">تاريخ الإضافة</span>
+                    <span class="view-value">${p.created_at}</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">متوسط سعر الشراء</span>
+                    <span class="view-value">${p.avg_buy_price} ج.م</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">سعر البيع</span>
+                    <span class="view-value fw-bold">${p.sell_price} ج.م</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">الربح لكل قطعة</span>
+                    <span class="view-value profit-value">${profit} ج.م</span>
+                </div>
+                <div class="view-item">
+                    <span class="view-label">المخزون</span>
+                    <span class="view-value">${p.stock} قطعة</span>
+                </div>
+                <div class="view-item full-width">
+                    <span class="view-label">حالة المخزون</span>
+                    <span class="view-value"><span class="badge badge-${statusClass}">${stockStatus}</span></span>
+                </div>
+            </div>
+            ${p.batches.length > 0 ? `
+            <div class="view-batches-section">
+                <h4 class="view-batches-title">
+                    <i class="ph ph-package"></i>
+                    دفعات الشراء (${p.batches.length})
+                </h4>
+                <div class="batch-history-table-wrap">
+                    <table class="batch-history-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>التاريخ</th>
+                                <th>الكمية</th>
+                                <th>المتبقي</th>
+                                <th>سعر الشراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>${batchRows}</tbody>
+                    </table>
+                </div>
+            </div>` : ''}
+        `;
+
+        openModal('view-modal');
+    };
+    window.closeViewModal = function () { closeModalById('view-modal'); };
+
+    /* ==============================
+       Delete Confirmation
+       ============================== */
+    window.confirmDelete = function (id, name) {
+        document.getElementById('delete-product-id').value = id;
+        document.getElementById('delete-product-name').textContent = name;
+        openModal('delete-modal');
+    };
+    window.closeDeleteModal = function () { closeModalById('delete-modal'); };
+
+    /* ==============================
+       Close modals on overlay / Escape
+       ============================== */
+    document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.open').forEach(function (m) {
+                m.classList.remove('open');
+            });
+            document.body.style.overflow = '';
+        }
+    });
+
+    /* ==============================
+       Live Profit Preview (Add Modal)
+       ============================== */
+    function updateAddProfit() {
+        const buy = parseFloat(document.getElementById('add-buy-price').value) || 0;
+        const sell = parseFloat(document.getElementById('add-sell-price').value) || 0;
+        const profit = (sell - buy).toFixed(2);
+        const display = document.getElementById('add-profit-display');
+        const preview = document.getElementById('add-profit-preview');
+
+        display.textContent = profit;
+        preview.className = profit > 0 ? 'profit-preview positive' :
+            profit < 0 ? 'profit-preview negative' : 'profit-preview';
+    }
+    const addBuyPrice = document.getElementById('add-buy-price');
+    if (addBuyPrice) addBuyPrice.addEventListener('input', updateAddProfit);
+    const addSellPrice = document.getElementById('add-sell-price');
+    if (addSellPrice) addSellPrice.addEventListener('input', updateAddProfit);
+
+    /* ==============================
+       Batch Total Preview
+       ============================== */
+    function updateBatchTotal() {
+        const price = parseFloat(document.getElementById('batch-buy-price').value) || 0;
+        const qty = parseInt(document.getElementById('batch-quantity').value) || 0;
+        document.getElementById('batch-total-display').textContent = (price * qty).toFixed(2);
+    }
+    const batchBuyPrice = document.getElementById('batch-buy-price');
+    if (batchBuyPrice) batchBuyPrice.addEventListener('input', updateBatchTotal);
+    const batchQty = document.getElementById('batch-quantity');
+    if (batchQty) batchQty.addEventListener('input', updateBatchTotal);
+
+    /* ==============================
+       Search & Filters
+       ============================== */
+    window.applyFilters = function () {
+        const search = document.getElementById('search-input').value.trim();
+        const category = document.getElementById('filter-category').value;
+        const stock = document.getElementById('filter-stock').value;
+
+        const params = new URLSearchParams(window.location.search);
+        
+        if (search) params.set('q', search);
+        else params.delete('q');
+        
+        if (category) params.set('category', category);
+        else params.delete('category');
+        
+        if (stock) params.set('stock', stock);
+        else params.delete('stock');
+
+        params.delete('page'); // Reset to first page on new filter
+
+        const qs = params.toString();
+        window.location.href = '{% url "products_list" %}' + (qs ? '?' + qs : '');
+    };
+
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyFilters();
+            }
+        });
+    }
+
+    // Preserve filters on pagination links
+    document.querySelectorAll('.pagination .page-link[href]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageUrl = new URL(link.href, window.location.origin);
+            const page = pageUrl.searchParams.get('page');
+            
+            const params = new URLSearchParams(window.location.search);
+            if (page) {
+                params.set('page', page);
+            }
+            const qs = params.toString();
+            window.location.href = '{% url "products_list" %}' + (qs ? '?' + qs : '');
+        });
+    });
+
+    /* ==============================
+       Stock Bar Coloring
+       ============================== */
+    document.querySelectorAll('.stock-bar').forEach(function (bar) {
+        const stock = parseInt(bar.dataset.stock);
+        const max = parseInt(bar.dataset.max) || 1;
+        const alert = parseInt(bar.dataset.alert);
+
+        /* Width = current stock / max stock (total purchased) */
+        const ratio = max > 0 ? Math.min((stock / max) * 100, 100) : 0;
+        bar.style.width = ratio + '%';
+
+        if (stock === 0) {
+            bar.style.background = 'var(--color-red-500)';
+        } else if (stock <= alert) {
+            bar.style.background = '#f59e0b';
+        } else {
+            bar.style.background = 'var(--color-green-500)';
+        }
+    });
+
+})();
+</script>
+{% endblock %}

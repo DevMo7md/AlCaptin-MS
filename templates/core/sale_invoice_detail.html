@@ -1,0 +1,172 @@
+{% extends "core/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}تفاصيل الفاتورة #{{ invoice.id }} — Al Captin MS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .invoice-title h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+    .invoice-title p {
+        color: #64748b;
+    }
+    .invoice-meta {
+        text-align: left;
+    }
+    .invoice-meta p {
+        margin-bottom: 0.25rem;
+        color: #475569;
+    }
+    .invoice-meta strong {
+        color: #0f172a;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+    }
+    .items-table th, .items-table td {
+        padding: 1rem;
+        text-align: right;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .items-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+    }
+    
+    .invoice-summary {
+        display: flex;
+        justify-content: flex-end;
+    }
+    .summary-box {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+        width: 300px;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        font-size: 1.125rem;
+        color: #475569;
+    }
+    .summary-row.total {
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: #0f172a;
+        border-top: 2px dashed #cbd5e1;
+        padding-top: 1rem;
+        margin-bottom: 0;
+    }
+    .summary-row.profit {
+        color: #15803d;
+        font-weight: 700;
+    }
+    
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        transition: 0.2s;
+    }
+    .btn-back:hover {
+        background: #cbd5e1;
+        color: #0f172a;
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header" style="max-width: 900px; margin: 0 auto 1rem;">
+    <a href="{% url 'sales_page' %}" class="btn-back">
+        <i class="ph ph-arrow-right"></i> العودة للمبيعات
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="invoice-card">
+    <div class="invoice-header">
+        <div class="invoice-title">
+            <h2>فاتورة مبيعات #{{ invoice.id }}</h2>
+            <p>Al Captin MS</p>
+        </div>
+        <div class="invoice-meta">
+            <p><strong>التاريخ:</strong> {{ invoice.created_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>البائع:</strong> {{ invoice.created_by.get_full_name|default:invoice.created_by.username|default:"-" }}</p>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>المنتج</th>
+                <th>الكمية</th>
+                <th>سعر البيع للوحدة</th>
+                <th>التكلفة الإجمالية (COGS)</th>
+                <th>إجمالي البيع</th>
+                <th>الربح</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.sell_price }} ج.م</td>
+                <td style="color:#b91c1c;">{{ item.cogs }} ج.م</td>
+                <td style="font-weight: 600;">{% widthratio item.sell_price 1 item.quantity %} ج.م</td>
+                <td style="color:#15803d; font-weight: 600;">{{ item.profit }} ج.م</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="invoice-summary">
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>عدد العناصر:</span>
+                <span>{{ items|length }}</span>
+            </div>
+            <div class="summary-row total">
+                <span>الإجمالي:</span>
+                <span>{{ invoice.total_amount }} ج.م</span>
+            </div>
+            <div class="summary-row profit">
+                <span>إجمالي الربح:</span>
+                <span>{{ invoice.total_profit }} ج.م</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
